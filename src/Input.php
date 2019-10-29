@@ -12,9 +12,9 @@ final class Input
     private $wrapped;
 
     /**
-     * Named constructor lifting a single value.
+     * Named constructor wrapping the given value.
      *
-     * @param mixed $value
+     * @param mixed     $value
      * @return \Quanta\Input
      */
     public static function unit($value): self
@@ -23,7 +23,7 @@ final class Input
     }
 
     /**
-     * Named constructor for invalid input.
+     * Named constructor wrapping the given errors.
      *
      * @param string $error
      * @param string ...$errors
@@ -55,7 +55,7 @@ final class Input
     public function map(callable $f): self
     {
         if ($this->wrapped instanceof Value) {
-            return self::unit($f($this->wrapped->value()));
+            return new self(new Value($f($this->wrapped->value())));
         }
 
         if ($this->wrapped instanceof ErrorList) {
@@ -80,7 +80,11 @@ final class Input
                     }
 
                     if ($this->wrapped instanceof Value) {
-                        return new self(new Value(fn (...$xs) => $f($this->wrapped->value(), ...$xs)));
+                        $wrapped = $this->wrapped;
+
+                        return new self(new Value(function (...$xs) use ($wrapped, $f) {
+                            return $f($wrapped->value(), ...$xs);
+                        }));
                     }
 
                     if ($this->wrapped instanceof ErrorList) {
@@ -101,7 +105,7 @@ final class Input
 
         catch (NotCallableException $e) {
             throw new \InvalidArgumentException(
-                'apply() error: the given instance of Input does not contain a callable'
+                'apply(): the given instance of Input does not contain a callable'
             );
         }
     }
@@ -112,7 +116,7 @@ final class Input
      * @return \Quanta\Input
      * @throws \LogicException
      */
-    public function flattened(): self
+    public function flatten(): self
     {
         if ($this->wrapped instanceof Value) {
             $value = $this->wrapped->value();
@@ -122,17 +126,17 @@ final class Input
             }
 
             throw new \LogicException(
-                'flattened() error: this instance of Input does not contain another instance of Input'
+                'flatten(): the wrapped value is not an instance of Input'
             );
         }
 
         if ($this->wrapped instanceof ErrorList) {
-            return $this;
+            return new self($this->wrapped);
         }
     }
 
     /**
-     * Apply the given lifting callable on the wrapped value.
+     * Apply the given wrapping callable on the wrapped value.
      *
      * === $this->map($f)->flattened() but better exceptions by doing this.
      *
@@ -150,12 +154,38 @@ final class Input
             }
 
             throw new \InvalidArgumentException(
-                'fmap() error: the given callable does not return an instance of Input'
+                'fmap(): the given callable does not return an instance of Input'
             );
         }
 
         if ($this->wrapped instanceof ErrorList) {
             return new self($this->wrapped);
+        }
+    }
+
+    /**
+     * Unpack the wrapped array by applying it the given wrapping callable.
+     *
+     * @param callable(mixed $value): \Quanta\Input $f
+     * @return \Quanta\Input[]
+     * @throws \LogicException
+     */
+    public function unpack(callable $f): array
+    {
+        if ($this->wrapped instanceof Value) {
+            $value = $this->wrapped->value();
+
+            if (is_array($value)) {
+                return array_map($f, array_values($value));
+            }
+
+            throw new \LogicException(
+                'unpack(): the wrapped value is not an array'
+            );
+        }
+
+        if ($this->wrapped instanceof ErrorList) {
+            return [new self($this->wrapped)];
         }
     }
 
