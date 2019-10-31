@@ -6,18 +6,23 @@ namespace Quanta;
 
 final class ErrorList
 {
+    /**
+     * @var \Quanta\ErrorInterface[]
+     */
     private $errors;
 
-    public function __construct(string $error, string ...$errors)
+    /**
+     * @param \Quanta\ErrorInterface $error
+     * @param \Quanta\ErrorInterface ...$errors
+     */
+    public function __construct(ErrorInterface $error, ErrorInterface ...$errors)
     {
         $this->errors = [$error, ...$errors];
     }
 
-    public function unshift(string ...$errors): self
-    {
-        return new self(...$errors, ...$this->errors);
-    }
-
+    /**
+     * @return \Quanta\ErrorInterface[]
+     */
     public function errors(): array
     {
         return $this->errors;

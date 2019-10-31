@@ -7,29 +7,47 @@ final class Input
     /**
      * The wrapped value.
      *
-     * @var \Quanta\Value|\Quanta\ErrorList
+     * @var \Quanta\Field|\Quanta\ErrorList
      */
     private $wrapped;
 
     /**
      * Named constructor wrapping the given value.
      *
+     * () => a -> Input a
+     *
      * @param mixed     $value
+     * @param string    ...$keys
      * @return \Quanta\Input
      */
-    public static function unit($value): self
+    public static function unit($value, string ...$keys): self
     {
-        return new self(new Value($value));
+        return new self(new Field($value, ...$keys));
+    }
+
+    /**
+     * Return the lifted version of the given callable.
+     *
+     * () => (a -> b -> ...) -> (Input a -> Input b -> ...)
+     *
+     * @param callable $f
+     * @return \Quanta\LiftedCallable
+     */
+    public static function pure(callable $f): LiftedCallable
+    {
+        return new LiftedCallable($f);
     }
 
     /**
      * Named constructor wrapping the given errors.
      *
-     * @param string $error
-     * @param string ...$errors
+     * () => [ErrorInterface] es -> Input es
+     *
+     * @param \Quanta\ErrorInterface $error
+     * @param \Quanta\ErrorInterface ...$errors
      * @return \Quanta\Input
      */
-    public static function invalid(string $error, string ...$errors): self
+    public static function invalid(ErrorInterface $error, ErrorInterface ...$errors): self
     {
         return new self(new ErrorList($error, ...$errors));
     }
@@ -37,9 +55,9 @@ final class Input
     /**
      * Private constructor to ensure a named constructor is used.
      *
-     * Using a private constructor ensure $wrapped is either Value or ErrorList.
+     * Using a private constructor ensure $wrapped is either a Field or an ErrorList.
      *
-     * @param \Quanta\Value|\Quanta\ErrorList $wrapped
+     * @param \Quanta\Field|\Quanta\ErrorList $wrapped
      */
     private function __construct($wrapped)
     {
@@ -49,13 +67,19 @@ final class Input
     /**
      * Apply the given callable to the wrapped value.
      *
+     * Input a                      => (a -> b) -> Input b
+     * Input [ErrorInterface] es    => (a -> b) -> Input[ErrorInterface] es
+     *
      * @param callable $f
      * @return \Quanta\Input
      */
     public function map(callable $f): self
     {
-        if ($this->wrapped instanceof Value) {
-            return new self(new Value($f($this->wrapped->value())));
+        if ($this->wrapped instanceof Field) {
+            $keys = $this->wrapped->keys();
+            $value = $this->wrapped->value();
+
+            return new self(new Field($f($value), ...$keys));
         }
 
         if ($this->wrapped instanceof ErrorList) {
@@ -66,68 +90,66 @@ final class Input
     /**
      * Apply the given wrapped callable to the wrapped value.
      *
+     * Input a                      => Input (a -> b) -> Input b
+     * Input a                      => Input [ErrorInterface] es -> Input [ErrorInterface] es
+     * Input [ErrorInterface] es    => Input (a -> b) -> Input [ErrorInterface] es
+     * Input [ErrorInterface] es1   => Input [ErrorInterface] es2 -> Input [ErrorInterface] es2 es1
+     *
      * @param \Quanta\Input $input
      * @return \Quanta\Input
-     * @throws \InvalidArgumentException
      */
     public function apply(self $input): self
     {
-        try {
-            return $input->extract(
-                function ($f) {
-                    if (! is_callable($f)) {
-                        throw new NotCallableException;
-                    }
+        if ($this->wrapped instanceof Field && $input->wrapped instanceof Field) {
+            $x = $this->wrapped->value();
+            $f = $input->wrapped->value();
 
-                    if ($this->wrapped instanceof Value) {
-                        $wrapped = $this->wrapped;
+            if (is_callable($f)) {
+                $keys = $input->wrapped->keys();
 
-                        return new self(new Value(function (...$xs) use ($wrapped, $f) {
-                            return $f($wrapped->value(), ...$xs);
-                        }));
-                    }
+                return new self(new Field(fn (...$xs) => $f($x, ...$xs), ...$keys));
+            }
 
-                    if ($this->wrapped instanceof ErrorList) {
-                        return new self($this->wrapped);
-                    }
-                },
-                function (string ...$errors) {
-                    if ($this->wrapped instanceof Value) {
-                        return new self(new ErrorList(...$errors));
-                    }
-
-                    if ($this->wrapped instanceof ErrorList) {
-                        return new self($this->wrapped->unshift(...$errors));
-                    }
-                },
-            );
+            throw new NotCallableException;
         }
 
-        catch (NotCallableException $e) {
-            throw new \InvalidArgumentException(
-                'apply(): the given instance of Input does not contain a callable'
-            );
-        }
+        return new self(new ErrorList(
+            ...($input->wrapped instanceof ErrorList ? $input->wrapped->errors() : []),
+            ...($this->wrapped instanceof ErrorList ? $this->wrapped->errors() : [])
+        ));
     }
 
     /**
      * Return the input wrapped inside this input.
      *
+     * Input Input a                    => Input a
+     * Input Input [ErrorInterface] es  => Input [ErrorInterface] es
+     * Input [ErrorInterface] es        => Input [ErrorInterface] es
+     *
      * @return \Quanta\Input
-     * @throws \LogicException
      */
     public function flatten(): self
     {
-        if ($this->wrapped instanceof Value) {
-            $value = $this->wrapped->value();
+        if ($this->wrapped instanceof Field) {
+            $keys1 = $this->wrapped->keys();
+            $input = $this->wrapped->value();
 
-            if ($value instanceof Input) {
-                return $value;
+            if ($input instanceof Input && $input->wrapped instanceof Field) {
+                $keys2 = $input->wrapped->keys();
+                $value = $input->wrapped->value();
+
+                return new self(new Field($value, ...$keys1, ...$keys2));
             }
 
-            throw new \LogicException(
-                'flatten(): the wrapped value is not an instance of Input'
-            );
+            if ($input instanceof Input && $input->wrapped instanceof ErrorList) {
+                $errors = $input->wrapped->errors();
+
+                return new self(new ErrorList(...array_map(function ($error) use ($keys1) {
+                    return new NestedError($error, ...$keys1);
+                }, $errors)));
+            }
+
+            throw new NotInputException;
         }
 
         if ($this->wrapped instanceof ErrorList) {
@@ -136,52 +158,48 @@ final class Input
     }
 
     /**
-     * Apply the given wrapping callable on the wrapped value.
+     * Apply the given wrapping callable on the wrapped value and flatten the result.
      *
-     * === $this->map($f)->flattened() but better exceptions by doing this.
+     * Input a                      => (a -> Input[b]) -> Input[b]
+     * Input [ErrorInterface] es    => Input [ErrorInterface] es
      *
-     * @param callable(mixed $value): \Quanta\Input $f
+     * @param callable(mixed $value): \Quanta\Input ...$fs
      * @return \Quanta\Input
-     * @throws \InvalidArgumentException
      */
-    public function fmap(callable $f): self
+    public function validate(callable ...$fs): self
     {
-        if ($this->wrapped instanceof Value) {
-            $value = $f($this->wrapped->value());
-
-            if ($value instanceof Input) {
-                return $value;
-            }
-
-            throw new \InvalidArgumentException(
-                'fmap(): the given callable does not return an instance of Input'
-            );
+        if (count($fs) == 0) {
+            return $this;
         }
 
-        if ($this->wrapped instanceof ErrorList) {
-            return new self($this->wrapped);
-        }
+        /** @var callable */
+        $f = array_shift($fs);
+
+        return $this->map($f)->flatten()->validate(...$fs);
     }
 
     /**
-     * Unpack the wrapped array by applying it the given wrapping callable.
+     * Apply the given wrapping callable on all the values of the wrapped array.
      *
-     * @param callable(mixed $value): \Quanta\Input $f
+     * Input [a]                    => (a -> Input[b]) -> [Input [b]]
+     * Input [ErrorInterface] es    => (a -> Input[b]) -> [Input [ErrorInterface] es]
+     *
+     * @param callable(mixed $value): \Quanta\Input ...$fs
      * @return \Quanta\Input[]
-     * @throws \LogicException
      */
-    public function unpack(callable $f): array
+    public function unpack(callable ...$fs): array
     {
-        if ($this->wrapped instanceof Value) {
+        if ($this->wrapped instanceof Field) {
+            $keys = $this->wrapped->keys();
             $value = $this->wrapped->value();
 
             if (is_array($value)) {
-                return array_map($f, array_values($value));
+                return array_map(function ($k, $v) use ($fs, $keys) {
+                    return (new self(new Field($v, ...[...$keys, (string) $k])))->validate(...$fs);
+                }, array_keys($value), $value);
             }
 
-            throw new \LogicException(
-                'unpack(): the wrapped value is not an array'
-            );
+            throw new NotArrayException;
         }
 
         if ($this->wrapped instanceof ErrorList) {
@@ -192,13 +210,16 @@ final class Input
     /**
      * Extract either the input value on success or the errors on failure.
      *
-     * @param callable(mixed $value): mixed         $success
-     * @param callable(string ...$errors): mixed    $failure
+     * Input a                      => (a -> b) -> ([ErrorInterface es] -> c) -> b
+     * Input [ErrorInterface es]    => (a -> b) -> ([ErrorInterface es] -> c) -> c
+     *
+     * @param callable(mixed $value): mixed                         $success
+     * @param callable(\Quanta\ErrorInterface ...$errors): mixed    $failure
      * @return mixed
      */
     public function extract(callable $success, callable $failure)
     {
-        if ($this->wrapped instanceof Value) {
+        if ($this->wrapped instanceof Field) {
             return $success($this->wrapped->value());
         }
 
