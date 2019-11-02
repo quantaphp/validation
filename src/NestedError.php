@@ -18,12 +18,13 @@ final class NestedError implements ErrorInterface
 
     /**
      * @param \Quanta\ErrorInterface    $error
+     * @param string                    $key
      * @param string                    ...$keys
      */
-    public function __construct(ErrorInterface $error, string ...$keys)
+    public function __construct(ErrorInterface $error, string $key, string ...$keys)
     {
         $this->error = $error;
-        $this->keys = $keys;
+        $this->keys = [$key, ...$keys];
     }
 
     /**

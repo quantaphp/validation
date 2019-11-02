@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Quanta;
 
-final class Field implements FieldInterface
+final class NamedField implements FieldInterface
 {
     /**
      * @var callable
@@ -12,10 +12,18 @@ final class Field implements FieldInterface
     private $f;
 
     /**
-     * @param callable $f
+     * @var string[]
      */
-    public function __construct(callable $f)
+    private $keys;
+
+    /**
+     * @param callable  $f
+     * @param string    $key
+     * @param string    ...$keys
+     */
+    public function __construct(callable $f, string $key, string ...$keys)
     {
+        $this->keys = [$key, ...$keys];
         $this->f = $f;
     }
 
@@ -59,7 +67,7 @@ final class Field implements FieldInterface
             $f = $this->f;
             $x = $input->value();
 
-            return (new self(fn (...$xs) => $f($x, ...$xs)))->apply(...$inputs);
+            return (new self(fn (...$xs) => $f($x, ...$xs), ...$this->keys))->apply(...$inputs);
         }
 
         if ($input instanceof ErrorList) {
@@ -83,14 +91,18 @@ final class Field implements FieldInterface
         /** @var callable */
         $f = array_shift($fs);
 
-        $input = $f($this->value());
+        $input = $f($this->f()());
 
-        if ($input instanceof FieldInterface) {
-            return $input->bind(...$fs);
+        if ($input instanceof Field) {
+            return (new self($input->f(), ...$this->keys))->bind(...$fs);
+        }
+
+        if ($input instanceof NamedField) {
+            return (new self($input->f(), ...$this->keys, ...$input->keys))->bind(...$fs);
         }
 
         if ($input instanceof ErrorList) {
-            return $input;
+            return $input->nested(...$this->keys)->bind(...$fs);
         }
 
         throw new \InvalidArgumentException(

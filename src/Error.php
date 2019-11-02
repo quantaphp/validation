@@ -19,27 +19,6 @@ final class Error implements ErrorInterface
     /**
      * @param string    $label
      * @param mixed     ...$params
-     * @return \Quanta\Error
-     */
-    public static function instance(string $label, ...$params): self
-    {
-        return new self($label, ...$params);
-    }
-
-    /**
-     * @param string    $name
-     * @param string    $label
-     * @param mixed     ...$params
-     * @return \Quanta\NestedError
-     */
-    public static function named(string $name, string $label, ...$params): ErrorInterface
-    {
-        return new NestedError(new self($label, ...$params), $name);
-    }
-
-    /**
-     * @param string    $label
-     * @param mixed     ...$params
      */
     public function __construct(string $label, ...$params)
     {
@@ -76,6 +55,6 @@ final class Error implements ErrorInterface
      */
     public function message(): string
     {
-        return sprintf(vsprintf($this->label, $this->params), 'Field');
+        return sprintf(vsprintf($this->label, $this->params), 'Input');
     }
 }
