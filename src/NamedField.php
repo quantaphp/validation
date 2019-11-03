@@ -37,33 +37,17 @@ final class NamedField implements FieldInterface
     /**
      * @inheritdoc
      */
-    public function map(callable $f): InputInterface
+    public function apply(InputInterface $input): InputInterface
     {
-        return (new Field($f))->apply($this);
+        return $this->field->apply($input);
     }
 
     /**
      * @inheritdoc
      */
-    public function apply(InputInterface ...$inputs): InputInterface
+    public function bind(callable $f): InputInterface
     {
-        $input = $this->field->apply(...$inputs);
-
-        if ($input instanceof Field || $input instanceof NamedField) {
-            return new self($this->name, $input);
-        }
-
-        if ($input instanceof ErrorList) {
-            return $input->named($this->name);
-        }
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function bind(callable ...$fs): InputInterface
-    {
-        $input = $this->field->bind(...$fs);
+        $input = $this->field->bind($f);
 
         if ($input instanceof Field || $input instanceof NamedField) {
             return new self($this->name, $input);

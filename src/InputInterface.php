@@ -7,38 +7,24 @@ namespace Quanta;
 interface InputInterface
 {
     /**
-     * Map the given callable over the wrapped value.
-     *
-     * a -> b -> InputInterface b
-     *
-     * @param callable(mixed $f): mixed $f
-     * @return \Quanta\InputInterface
-     */
-    public function map(callable $f): InputInterface;
-
-    /**
      * Apply the given input to the wrapped callable.
      *
-     * Works recursively.
+     * (InputInterface a -> b) -> InputInterface b
      *
-     * InputInterface a -> InputInterface b
-     *
-     * @param \Quanta\InputInterface ...$inputs
+     * @param \Quanta\InputInterface $input
      * @return \Quanta\InputInterface
      */
-    public function apply(InputInterface ...$inputs): InputInterface;
+    public function apply(InputInterface $input): InputInterface;
 
     /**
      * Apply the given wrapping callable on the wrapped value.
      *
-     * Works recursively.
+     * (a -> InputInterface b) -> InputInterface b
      *
-     * a -> InputInterface b -> InputInterface b
-     *
-     * @param callable(mixed $a): \Quanta\InputInterface ...$fs
+     * @param callable(mixed $a): \Quanta\InputInterface $f
      * @return \Quanta\InputInterface
      */
-    public function bind(callable ...$fs): InputInterface;
+    public function bind(callable $f): InputInterface;
 
     /**
      * Apply the given success callable on successful value or the failure callable on errors.

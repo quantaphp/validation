@@ -32,40 +32,25 @@ final class ErrorList implements InputInterface
     /**
      * @inheritdoc
      */
-    public function map(callable $f): InputInterface
+    public function apply(InputInterface $input): InputInterface
     {
-        return $this;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function apply(InputInterface ...$inputs): InputInterface
-    {
-        if (count($inputs) == 0) {
+        if ($input instanceof Field || $input instanceof NamedField) {
             return $this;
         }
 
-        /** @var \Quanta\InputInterface */
-        $input = array_shift($inputs);
-
-        if ($input instanceof FieldInterface) {
-            return $this->apply(...$inputs);
-        }
-
         if ($input instanceof ErrorList) {
-            return (new self(...$this->errors, ...$input->errors))->apply(...$inputs);
+            return new self(...$this->errors, ...$input->errors);
         }
 
         throw new \InvalidArgumentException(
-            sprintf('apply() : the given input must be Quanta\FieldInterface|Quanta\ErrorList, %s given', gettype($input))
+            sprintf('apply() : the given input must be Quanta\Field|Quanta\NamedField|Quanta\ErrorList, %s given', gettype($input))
         );
     }
 
     /**
      * @inheritdoc
      */
-    public function bind(callable ...$fs): InputInterface
+    public function bind(callable $f): InputInterface
     {
         return $this;
     }

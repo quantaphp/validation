@@ -30,32 +30,17 @@ final class Field implements FieldInterface
     /**
      * @inheritdoc
      */
-    public function map(callable $f): InputInterface
+    public function apply(InputInterface $input): InputInterface
     {
-        return (new Field($f))->apply($this);
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function apply(InputInterface ...$inputs): InputInterface
-    {
-        if (count($inputs) == 0) {
-            return $this;
-        }
-
-        /** @var \Quanta\InputInterface */
-        $input = array_shift($inputs);
-
         if ($input instanceof Field || $input instanceof NamedField) {
-            $f = $this->f;
-            $x = $input->f()();
+            $f = $input->f();
+            $x = ($this->f)();
 
-            return (new self(fn (...$xs) => $f($x, ...$xs)))->apply(...$inputs);
+            return new self(fn (...$xs) => $f($x, ...$xs));
         }
 
         if ($input instanceof ErrorList) {
-            return $input->apply(...$inputs);
+            return $input;
         }
 
         throw new \InvalidArgumentException(
@@ -66,28 +51,18 @@ final class Field implements FieldInterface
     /**
      * @inheritdoc
      */
-    public function bind(callable ...$fs): InputInterface
+    public function bind(callable $f): InputInterface
     {
-        if (count($fs) == 0) {
-            return $this;
-        }
-
-        /** @var callable */
-        $f = array_shift($fs);
         $x = ($this->f)();
 
         $input = $f($x);
 
-        if ($input instanceof Field || $input instanceof NamedField) {
-            return $input->bind(...$fs);
-        }
-
-        if ($input instanceof ErrorList) {
+        if ($input instanceof Field || $input instanceof NamedField || $input instanceof ErrorList) {
             return $input;
         }
 
         throw new \InvalidArgumentException(
-            sprintf('bind() : the given callable must return an instance of Quanta\FieldInterface|Quanta\ErrorList, %s returned', gettype($input))
+            sprintf('bind() : the given callable must return an instance of Quanta\Field|Quanta\NamedField|Quanta\ErrorList, %s returned', gettype($input))
         );
     }
 

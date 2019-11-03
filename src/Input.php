@@ -16,12 +16,12 @@ final class Input
 
     public static function map(callable $f): callable
     {
-        return fn (InputInterface $input) => $input->map($f);
+        return fn (InputInterface $input) => self::pure($f)->apply($input);
     }
 
     public static function apply(InputInterface $f): callable
     {
-        return fn (InputInterface $input) => $f->apply($input);
+        return fn (InputInterface $input) => $input->apply($f);
     }
 
     public static function bind(callable $f): callable
