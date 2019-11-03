@@ -15,26 +15,18 @@ final class ErrorList implements InputInterface
      * @param \Quanta\ErrorInterface    $error
      * @param \Quanta\ErrorInterface    ...$errors
      */
-    public static function instance(ErrorInterface $error, ErrorInterface ...$errors): self
-    {
-        return new self($error, ...$errors);
-    }
-
-    /**
-     * @param \Quanta\ErrorInterface    $error
-     * @param \Quanta\ErrorInterface    ...$errors
-     */
     public function __construct(ErrorInterface $error, ErrorInterface ...$errors)
     {
         $this->errors = [$error, ...$errors];
     }
 
     /**
-     * @inheritdoc
+     * @param string $name
+     * @return \Quanta\ErrorList
      */
-    public function nested(string $key, string ...$keys): self
+    public function named(string $name): self
     {
-        return new self(...array_map(fn ($e) => new NestedError($e, $key, ...$keys), $this->errors));
+        return new self(...array_map(fn ($e) => new NamedError($name, $e), $this->errors));
     }
 
     /**

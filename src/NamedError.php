@@ -4,27 +4,26 @@ declare(strict_types=1);
 
 namespace Quanta;
 
-final class NestedError implements ErrorInterface
+final class NamedError implements ErrorInterface
 {
+    /**
+     * @var string
+     */
+    private $name;
+
     /**
      * @var \Quanta\ErrorInterface
      */
     private $error;
 
     /**
-     * @var string[]
-     */
-    private $keys;
-
-    /**
+     * @param string                    $name
      * @param \Quanta\ErrorInterface    $error
-     * @param string                    $key
-     * @param string                    ...$keys
      */
-    public function __construct(ErrorInterface $error, string $key, string ...$keys)
+    public function __construct(string $name, ErrorInterface $error)
     {
+        $this->name = $name;
         $this->error = $error;
-        $this->keys = [$key, ...$keys];
     }
 
     /**
@@ -32,7 +31,7 @@ final class NestedError implements ErrorInterface
      */
     public function name(): string
     {
-        return implode('', array_map(fn ($key) => '[' . $key . ']', $this->keys)) . $this->error->name();
+        return '[' . $this->name . ']' . $this->error->name();
     }
 
     /**

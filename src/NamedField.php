@@ -7,24 +7,23 @@ namespace Quanta;
 final class NamedField implements FieldInterface
 {
     /**
-     * @var callable
+     * @var string
      */
-    private $f;
+    private $name;
 
     /**
-     * @var string[]
+     * @var \Quanta\FieldInterface
      */
-    private $keys;
+    private $field;
 
     /**
-     * @param callable  $f
-     * @param string    $key
-     * @param string    ...$keys
+     * @param string                    $name
+     * @param \Quanta\FieldInterface    $field
      */
-    public function __construct(callable $f, string $key, string ...$keys)
+    public function __construct(string $name, FieldInterface $field)
     {
-        $this->keys = [$key, ...$keys];
-        $this->f = $f;
+        $this->name = $name;
+        $this->field = $field;
     }
 
     /**
@@ -32,15 +31,7 @@ final class NamedField implements FieldInterface
      */
     public function f(): callable
     {
-        return $this->f;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function value()
-    {
-        return ($this->f)();
+        return $this->field->f();
     }
 
     /**
@@ -56,27 +47,15 @@ final class NamedField implements FieldInterface
      */
     public function apply(InputInterface ...$inputs): InputInterface
     {
-        if (count($inputs) == 0) {
-            return $this;
-        }
+        $input = $this->field->apply(...$inputs);
 
-        /** @var \Quanta\InputInterface */
-        $input = array_shift($inputs);
-
-        if ($input instanceof FieldInterface) {
-            $f = $this->f;
-            $x = $input->value();
-
-            return (new self(fn (...$xs) => $f($x, ...$xs), ...$this->keys))->apply(...$inputs);
+        if ($input instanceof Field || $input instanceof NamedField) {
+            return new self($this->name, $input);
         }
 
         if ($input instanceof ErrorList) {
-            return $input->apply(...$inputs);
+            return $input->named($this->name);
         }
-
-        throw new \InvalidArgumentException(
-            sprintf('apply() : the given input must be Quanta\FieldInterface|Quanta\ErrorList, %s given', gettype($input))
-        );
     }
 
     /**
@@ -84,30 +63,15 @@ final class NamedField implements FieldInterface
      */
     public function bind(callable ...$fs): InputInterface
     {
-        if (count($fs) == 0) {
-            return $this;
-        }
+        $input = $this->field->bind(...$fs);
 
-        /** @var callable */
-        $f = array_shift($fs);
-
-        $input = $f($this->f()());
-
-        if ($input instanceof Field) {
-            return (new self($input->f(), ...$this->keys))->bind(...$fs);
-        }
-
-        if ($input instanceof NamedField) {
-            return (new self($input->f(), ...$this->keys, ...$input->keys))->bind(...$fs);
+        if ($input instanceof Field || $input instanceof NamedField) {
+            return new self($this->name, $input);
         }
 
         if ($input instanceof ErrorList) {
-            return $input->nested(...$this->keys)->bind(...$fs);
+            return $input->named($this->name);
         }
-
-        throw new \InvalidArgumentException(
-            sprintf('bind() : the given callable must return Quanta\FieldInterface|Quanta\ErrorList, %s returned', gettype($input))
-        );
     }
 
     /**
@@ -115,6 +79,6 @@ final class NamedField implements FieldInterface
      */
     public function extract(callable $success, callable $failure)
     {
-        return $success($this->value());
+        return $this->field->extract($success, $failure);
     }
 }

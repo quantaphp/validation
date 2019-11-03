@@ -12,11 +12,4 @@ interface FieldInterface extends InputInterface
      * @return callable
      */
     public function f(): callable;
-
-    /**
-     * Return the value of the wrapped callable invoked with no argument.
-     *
-     * @return mixed
-     */
-    public function value();
 }

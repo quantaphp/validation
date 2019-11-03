@@ -30,14 +30,6 @@ final class Field implements FieldInterface
     /**
      * @inheritdoc
      */
-    public function value()
-    {
-        return ($this->f)();
-    }
-
-    /**
-     * @inheritdoc
-     */
     public function map(callable $f): InputInterface
     {
         return (new Field($f))->apply($this);
@@ -55,9 +47,9 @@ final class Field implements FieldInterface
         /** @var \Quanta\InputInterface */
         $input = array_shift($inputs);
 
-        if ($input instanceof FieldInterface) {
+        if ($input instanceof Field || $input instanceof NamedField) {
             $f = $this->f;
-            $x = $input->value();
+            $x = $input->f()();
 
             return (new self(fn (...$xs) => $f($x, ...$xs)))->apply(...$inputs);
         }
@@ -67,7 +59,7 @@ final class Field implements FieldInterface
         }
 
         throw new \InvalidArgumentException(
-            sprintf('apply() : the given input must be Quanta\FieldInterface|Quanta\ErrorList, %s given', gettype($input))
+            sprintf('apply() : the given argument must be an instance of Quanta\Field|Quanta\NamedField|Quanta\ErrorList, %s given', gettype($input))
         );
     }
 
@@ -82,10 +74,11 @@ final class Field implements FieldInterface
 
         /** @var callable */
         $f = array_shift($fs);
+        $x = ($this->f)();
 
-        $input = $f($this->value());
+        $input = $f($x);
 
-        if ($input instanceof FieldInterface) {
+        if ($input instanceof Field || $input instanceof NamedField) {
             return $input->bind(...$fs);
         }
 
@@ -94,7 +87,7 @@ final class Field implements FieldInterface
         }
 
         throw new \InvalidArgumentException(
-            sprintf('bind() : the given callable must return Quanta\FieldInterface|Quanta\ErrorList, %s returned', gettype($input))
+            sprintf('bind() : the given callable must return an instance of Quanta\FieldInterface|Quanta\ErrorList, %s returned', gettype($input))
         );
     }
 
@@ -103,6 +96,6 @@ final class Field implements FieldInterface
      */
     public function extract(callable $success, callable $failure)
     {
-        return $success($this->value());
+        return $success($this->f()());
     }
 }
