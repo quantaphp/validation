@@ -28,7 +28,8 @@ final class Field implements FieldInterface
     }
 
     /**
-     * @inheritdoc
+     * @param \Quanta\InputInterface $input
+     * @return \Quanta\Field|\Quanta\NamedField|\Quanta\ErrorList
      */
     public function apply(InputInterface $input): InputInterface
     {
@@ -44,12 +45,13 @@ final class Field implements FieldInterface
         }
 
         throw new \InvalidArgumentException(
-            sprintf('apply() : the given argument must be an instance of Quanta\Field|Quanta\NamedField|Quanta\ErrorList, %s given', gettype($input))
+            sprintf('The given argument must be an instance of Quanta\Field|Quanta\NamedField|Quanta\ErrorList, %s given', gettype($input))
         );
     }
 
     /**
-     * @inheritdoc
+     * @param callable(mixed $value): \Quanta\InputInterface $f
+     * @return \Quanta\Field|\Quanta\NamedField|\Quanta\ErrorList
      */
     public function bind(callable $f): InputInterface
     {
@@ -62,7 +64,7 @@ final class Field implements FieldInterface
         }
 
         throw new \InvalidArgumentException(
-            sprintf('bind() : the given callable must return an instance of Quanta\Field|Quanta\NamedField|Quanta\ErrorList, %s returned', gettype($input))
+            sprintf('The given callable must return an instance of Quanta\Field|Quanta\NamedField|Quanta\ErrorList, %s returned', gettype($input))
         );
     }
 
