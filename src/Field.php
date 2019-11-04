@@ -4,40 +4,32 @@ declare(strict_types=1);
 
 namespace Quanta;
 
-final class Field implements FieldInterface
+final class Field implements InputInterface
 {
     /**
-     * @var callable
+     * @var mixed
      */
-    private $f;
+    private $value;
 
     /**
-     * @param callable $f
+     * @param mixed $value
      */
-    public function __construct(callable $f)
+    public function __construct($value)
     {
-        $this->f = $f;
+        $this->value = $value;
     }
 
     /**
-     * @inheritdoc
-     */
-    public function f(): callable
-    {
-        return $this->f;
-    }
-
-    /**
-     * @param \Quanta\InputInterface $input
-     * @return \Quanta\Field|\Quanta\NamedField|\Quanta\ErrorList
+     * @param \Quanta\Field|\Quanta\ErrorList $input
+     * @return \Quanta\Field|\Quanta\ErrorList
      */
     public function apply(InputInterface $input): InputInterface
     {
-        if ($input instanceof Field || $input instanceof NamedField) {
-            $f = $input->f();
-            $x = ($this->f)();
+        if ($input instanceof Field) {
+            $x = $this->value;
+            $f = $input->value;
 
-            return new self(fn (...$xs) => $f($x, ...$xs));
+            return new Field(fn (...$xs) => $f($x, ...$xs));
         }
 
         if ($input instanceof ErrorList) {
@@ -45,7 +37,7 @@ final class Field implements FieldInterface
         }
 
         throw new \InvalidArgumentException(
-            sprintf('The given argument must be an instance of Quanta\Field|Quanta\NamedField|Quanta\ErrorList, %s given', gettype($input))
+            sprintf('The given argument must be an instance of Quanta\Field|Quanta\ErrorList, %s given', gettype($input))
         );
     }
 
@@ -55,9 +47,7 @@ final class Field implements FieldInterface
      */
     public function bind(callable $f): InputInterface
     {
-        $x = ($this->f)();
-
-        $input = $f($x);
+        $input = $f($this->value);
 
         if ($input instanceof Field || $input instanceof NamedField || $input instanceof ErrorList) {
             return $input;
@@ -73,15 +63,13 @@ final class Field implements FieldInterface
      */
     public function unpack(): array
     {
-        $value = ($this->f)();
-
-        if (is_array($value)) {
+        if (is_array($this->value)) {
             return array_map(function ($key, $value) {
-                return NamedField::from((string) $key, new self(fn () => $value));
-            }, array_keys($value), $value);
+                return NamedField::from((string) $key, new self($value));
+            }, array_keys($this->value), $this->value);
         }
 
-        throw new \LogicException(sprintf('cannot unpack %s', gettype($value)));
+        throw new \LogicException(sprintf('cannot unpack %s', gettype($this->value)));
     }
 
     /**
@@ -89,6 +77,6 @@ final class Field implements FieldInterface
      */
     public function extract(callable $success, callable $failure)
     {
-        return $success($this->f()());
+        return $success($this->value);
     }
 }

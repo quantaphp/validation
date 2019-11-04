@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Quanta;
 
-final class NamedField implements FieldInterface
+final class NamedField implements InputInterface
 {
     /**
      * @var string
@@ -18,9 +18,9 @@ final class NamedField implements FieldInterface
 
     /**
      * @param string                    $name
-     * @param \Quanta\FieldInterface    $field
+     * @param \Quanta\InputInterface    $field
      */
-    public static function from(string $name, FieldInterface $field): self
+    public static function from(string $name, InputInterface $field): self
     {
         if ($field instanceof Field || $field instanceof NamedField) {
             return new self($name, $field);
@@ -35,23 +35,15 @@ final class NamedField implements FieldInterface
      * @param string                            $name
      * @param \Quanta\Field|\Quanta\NamedField  $field
      */
-    private function __construct(string $name, FieldInterface $field)
+    private function __construct(string $name, $field)
     {
         $this->name = $name;
         $this->field = $field;
     }
 
     /**
-     * @inheritdoc
-     */
-    public function f(): callable
-    {
-        return $this->field->f();
-    }
-
-    /**
-     * @param \Quanta\InputInterface $input
-     * @return \Quanta\Field|\Quanta\NamedField|\Quanta\ErrorList
+     * @param \Quanta\Field|\Quanta\ErrorList $input
+     * @return \Quanta\Field|\Quanta\ErrorList
      */
     public function apply(InputInterface $input): InputInterface
     {
@@ -80,9 +72,7 @@ final class NamedField implements FieldInterface
      */
     public function unpack(): array
     {
-        $inputs = $this->field->unpack();
-
-        return array_map(fn ($input) => new self($this->name, $input), $inputs);
+        return array_map(fn ($input) => new self($this->name, $input), $this->field->unpack());
     }
 
     /**

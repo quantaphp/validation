@@ -30,12 +30,12 @@ final class ErrorList implements InputInterface
     }
 
     /**
-     * @param \Quanta\InputInterface $input
+     * @param \Quanta\Field|\Quanta\ErrorList $input
      * @return \Quanta\ErrorList
      */
-    public function apply(InputInterface $input): InputInterface
+    public function apply(InputInterface $input): ErrorList
     {
-        if ($input instanceof Field || $input instanceof NamedField) {
+        if ($input instanceof Field) {
             return $this;
         }
 
@@ -44,7 +44,7 @@ final class ErrorList implements InputInterface
         }
 
         throw new \InvalidArgumentException(
-            sprintf('apply() : the given input must be Quanta\Field|Quanta\NamedField|Quanta\ErrorList, %s given', gettype($input))
+            sprintf('The given argument must be an instance of Quanta\Field|Quanta\ErrorList, %s given', gettype($input))
         );
     }
 

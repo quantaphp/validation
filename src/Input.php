@@ -6,7 +6,7 @@ final class Input
 {
     public static function unit($value): Field
     {
-        return new Field(fn () => $value);
+        return new Field($value);
     }
 
     public static function pure(callable $f): Field
@@ -18,7 +18,7 @@ final class Input
     {
         return function (InputInterface $input) use ($f) {
             if ($input instanceof Field || $input instanceof NamedField || $input instanceof ErrorList) {
-                return self::pure($f)->apply($input);
+                return $input->apply(self::pure($f));
             }
 
             throw new \InvalidArgumentException(
@@ -27,7 +27,7 @@ final class Input
         };
     }
 
-    public static function apply(InputInterface $f): callable
+    public static function apply(Field $f): callable
     {
         return function (InputInterface $input) use ($f) {
             if ($input instanceof Field || $input instanceof NamedField || $input instanceof ErrorList) {
