@@ -30,12 +30,11 @@ final class ErrorList implements InputInterface
     }
 
     /**
-     * @param \Quanta\Field|\Quanta\ErrorList $input
-     * @return \Quanta\ErrorList
+     * @inheritdoc
      */
-    public function apply(InputInterface $input): ErrorList
+    public function apply(InputInterface $input): InputInterface
     {
-        if ($input instanceof Field) {
+        if ($input instanceof WrappedCallable) {
             return $this;
         }
 
@@ -44,13 +43,12 @@ final class ErrorList implements InputInterface
         }
 
         throw new \InvalidArgumentException(
-            sprintf('The given argument must be an instance of Quanta\Field|Quanta\ErrorList, %s given', gettype($input))
+            sprintf('The given argument must be an instance of Quanta\WrappedCallable|Quanta\ErrorList, %s given', gettype($input))
         );
     }
 
     /**
-     * @param callable(mixed $value): \Quanta\InputInterface $f
-     * @return \Quanta\ErrorList
+     * @inheritdoc
      */
     public function bind(callable $f): InputInterface
     {

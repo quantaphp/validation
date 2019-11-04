@@ -12,7 +12,7 @@ final class NamedField implements InputInterface
     private $name;
 
     /**
-     * @var \Quanta\Field|\Quanta\NamedField
+     * @var \Quanta\Field|\Quanta\NamedField|\Quanta\WrappedCallable
      */
     private $field;
 
@@ -22,7 +22,7 @@ final class NamedField implements InputInterface
      */
     public static function from(string $name, InputInterface $field): self
     {
-        if ($field instanceof Field || $field instanceof NamedField) {
+        if ($field instanceof Field || $field instanceof NamedField || $field instanceof WrappedCallable) {
             return new self($name, $field);
         }
 
@@ -32,8 +32,8 @@ final class NamedField implements InputInterface
     }
 
     /**
-     * @param string                            $name
-     * @param \Quanta\Field|\Quanta\NamedField  $field
+     * @param string                                                    $name
+     * @param \Quanta\Field|\Quanta\NamedField|\Quanta\WrappedCallable  $field
      */
     private function __construct(string $name, $field)
     {
@@ -42,8 +42,7 @@ final class NamedField implements InputInterface
     }
 
     /**
-     * @param \Quanta\Field|\Quanta\ErrorList $input
-     * @return \Quanta\Field|\Quanta\ErrorList
+     * @inheritdoc
      */
     public function apply(InputInterface $input): InputInterface
     {
@@ -51,14 +50,13 @@ final class NamedField implements InputInterface
     }
 
     /**
-     * @param callable(mixed $value): \Quanta\InputInterface $f
-     * @return \Quanta\Field|\Quanta\NamedField|\Quanta\ErrorList
+     * @inheritdoc
      */
     public function bind(callable $f): InputInterface
     {
         $input = $this->field->bind($f);
 
-        if ($input instanceof Field || $input instanceof NamedField) {
+        if ($input instanceof Field || $input instanceof NamedField || $input instanceof WrappedCallable) {
             return new self($this->name, $input);
         }
 

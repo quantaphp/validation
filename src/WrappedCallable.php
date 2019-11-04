@@ -4,19 +4,37 @@ declare(strict_types=1);
 
 namespace Quanta;
 
-final class Field implements InputInterface
+final class WrappedCallable implements InputInterface
 {
     /**
-     * @var mixed
+     * @var callable
      */
-    private $value;
+    private $f;
 
     /**
-     * @param mixed $value
+     * @param callable $f
      */
-    public function __construct($value)
+    public function __construct(callable $f)
     {
-        $this->value = $value;
+        $this->f = $f;
+    }
+
+    /**
+     * @param mixed $x
+     * @return \Quanta\WrappedCallable
+     */
+    public function curryed($x): self
+    {
+        return new self(fn (...$xs) => ($this->f)($x, ...$xs));
+    }
+
+    /**
+     * @param \Quanta\InputInterface ...$inputs
+     * @return \Quanta\InputInterface
+     */
+    public function __invoke(InputInterface ...$inputs): InputInterface
+    {
+        return array_reduce($inputs, fn ($f, $input) => $input->apply($f), $this);
     }
 
     /**
@@ -25,7 +43,7 @@ final class Field implements InputInterface
     public function apply(InputInterface $input): InputInterface
     {
         if ($input instanceof WrappedCallable) {
-            return $input->curryed($this->value);
+            return $input->curryed(($this->f)());
         }
 
         if ($input instanceof ErrorList) {
@@ -42,7 +60,7 @@ final class Field implements InputInterface
      */
     public function bind(callable $f): InputInterface
     {
-        $input = $f($this->value);
+        $input = $f(($this->f)());
 
         if ($input instanceof Field || $input instanceof NamedField || $input instanceof WrappedCallable || $input instanceof ErrorList) {
             return $input;
@@ -58,13 +76,15 @@ final class Field implements InputInterface
      */
     public function unpack(): array
     {
-        if (is_array($this->value)) {
+        $value = ($this->f)();
+
+        if (is_array($value)) {
             return array_map(function ($key, $value) {
                 return NamedField::from((string) $key, new self($value));
-            }, array_keys($this->value), $this->value);
+            }, array_keys($value), $value);
         }
 
-        throw new \LogicException(sprintf('cannot unpack %s', gettype($this->value)));
+        throw new \LogicException(sprintf('cannot unpack %s', gettype($value)));
     }
 
     /**
@@ -72,6 +92,6 @@ final class Field implements InputInterface
      */
     public function extract(callable $success, callable $failure)
     {
-        return $success($this->value);
+        return $success(($this->f)());
     }
 }
