@@ -69,6 +69,22 @@ final class Field implements FieldInterface
     }
 
     /**
+     * @return \Quanta\NamedField[]
+     */
+    public function unpack(): array
+    {
+        $value = ($this->f)();
+
+        if (is_array($value)) {
+            return array_map(function ($key, $value) {
+                return NamedField::from((string) $key, new self(fn () => $value));
+            }, array_keys($value), $value);
+        }
+
+        throw new \LogicException(sprintf('cannot unpack %s', gettype($value)));
+    }
+
+    /**
      * @inheritdoc
      */
     public function extract(callable $success, callable $failure)

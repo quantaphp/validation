@@ -20,7 +20,7 @@ final class NamedField implements FieldInterface
      * @param string                    $name
      * @param \Quanta\FieldInterface    $field
      */
-    public function from(string $name, FieldInterface $field): self
+    public static function from(string $name, FieldInterface $field): self
     {
         if ($field instanceof Field || $field instanceof NamedField) {
             return new self($name, $field);
@@ -55,13 +55,7 @@ final class NamedField implements FieldInterface
      */
     public function apply(InputInterface $input): InputInterface
     {
-        if ($input instanceof Field || $input instanceof NamedField || $input instanceof ErrorList) {
-            return $this->field->apply($input);
-        }
-
-        throw new \InvalidArgumentException(
-            sprintf('The given argument must be an instance of Quanta\Field|Quanta\NamedField|Quanta\ErrorList, instance of %s given', get_class($input))
-        );
+        return $this->field->apply($input);
     }
 
     /**
@@ -79,10 +73,16 @@ final class NamedField implements FieldInterface
         if ($input instanceof ErrorList) {
             return $input->named($this->name);
         }
+    }
 
-        throw new \InvalidArgumentException(
-            sprintf('The given callable must return an instance of Quanta\Field|Quanta\NamedField|Quanta\ErrorList, %s returned', gettype($input))
-        );
+    /**
+     * @return \Quanta\NamedField[]
+     */
+    public function unpack(): array
+    {
+        $inputs = $this->field->unpack();
+
+        return array_map(fn ($input) => new self($this->name, $input), $inputs);
     }
 
     /**

@@ -30,7 +30,8 @@ final class ErrorList implements InputInterface
     }
 
     /**
-     * @inheritdoc
+     * @param \Quanta\InputInterface $input
+     * @return \Quanta\ErrorList
      */
     public function apply(InputInterface $input): InputInterface
     {
@@ -39,7 +40,7 @@ final class ErrorList implements InputInterface
         }
 
         if ($input instanceof ErrorList) {
-            return new self(...$this->errors, ...$input->errors);
+            return new self(...$input->errors, ...$this->errors);
         }
 
         throw new \InvalidArgumentException(
@@ -48,11 +49,20 @@ final class ErrorList implements InputInterface
     }
 
     /**
-     * @inheritdoc
+     * @param callable(mixed $value): \Quanta\InputInterface $f
+     * @return \Quanta\ErrorList
      */
     public function bind(callable $f): InputInterface
     {
         return $this;
+    }
+
+    /**
+     * @return \Quanta\ErrorList[]
+     */
+    public function unpack(): array
+    {
+        return [$this];
     }
 
     /**
