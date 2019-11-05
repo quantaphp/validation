@@ -12,13 +12,14 @@ final class ErrorList implements InputInterface
     private $errors;
 
     /**
+     * @param string                    $name
      * @param \Quanta\ErrorInterface    $error
      * @param \Quanta\ErrorInterface    ...$errors
      * @return \Quanta\ErrorList
      */
-    public static function from(ErrorInterface $error, ErrorInterface ...$errors): self
+    public static function named(string $name, ErrorInterface $error, ErrorInterface ...$errors): self
     {
-        return new self($error, ...$errors);
+        return (new self($error, ...$errors))->nested($name);
     }
 
     /**
@@ -31,12 +32,19 @@ final class ErrorList implements InputInterface
     }
 
     /**
-     * @param string $name
+     * @param string ...$keys
      * @return \Quanta\ErrorList
      */
-    public function named(string $name): self
+    public function nested(string ...$keys): self
     {
-        return new self(...array_map(fn ($e) => new NamedError($name, $e), $this->errors));
+        if (count($keys) == 0) {
+            return $this;
+        }
+
+        /** @var string */
+        $key = array_pop($keys);
+
+        return (new self(...array_map(fn ($e) => new NestedError($key, $e), $this->errors)))->nested(...$keys);
     }
 
     /**

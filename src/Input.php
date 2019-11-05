@@ -12,7 +12,7 @@ final class Input
      */
     public static function unit($value): Field
     {
-        return Field::from($value);
+        return new Field($value);
     }
 
     /**
@@ -23,7 +23,7 @@ final class Input
      */
     public static function pure(callable $f): WrappedCallable
     {
-        return WrappedCallable::from($f);
+        return new WrappedCallable($f);
     }
 
     /**

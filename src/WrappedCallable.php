@@ -13,15 +13,6 @@ final class WrappedCallable implements InputInterface
 
     /**
      * @param callable $f
-     * @return \Quanta\WrappedCallable
-     */
-    public static function from(callable $f): self
-    {
-        return new self($f);
-    }
-
-    /**
-     * @param callable $f
      */
     public function __construct(callable $f)
     {
@@ -88,14 +79,14 @@ final class WrappedCallable implements InputInterface
 
         switch (true) {
             case $input instanceof Field:
-            case $input instanceof NamedField:
             case $input instanceof WrappedCallable:
-            case $input instanceof ErrorList:
                 return $input->validate(...$fs);
+            case $input instanceof ErrorList:
+                return $input;
         }
 
         throw new \InvalidArgumentException(
-            sprintf('The given callable must return an instance of Quanta\Field|Quanta\NamedField|Quanta\WrappedCallable|Quanta\ErrorList, %s returned', gettype($input))
+            sprintf('The given callable must return an instance of Quanta\Field|Quanta\WrappedCallable|Quanta\ErrorList, %s returned', gettype($input))
         );
     }
 
@@ -108,7 +99,7 @@ final class WrappedCallable implements InputInterface
 
         if (is_array($value)) {
             return array_map(function ($key, $value) use ($fs) {
-                return NamedField::from((string) $key, new self($value))->validate(...$fs);
+                return (new Field($value, (string) $key))->validate(...$fs);
             }, array_keys($value), $value);
         }
 

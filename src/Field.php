@@ -7,24 +7,32 @@ namespace Quanta;
 final class Field implements InputInterface
 {
     /**
+     * @var string[]
+     */
+    private $keys;
+
+    /**
      * @var mixed
      */
     private $value;
 
     /**
-     * @param mixed $value
+     * @param string    $name
+     * @param mixed     $value
      * @return \Quanta\Field
      */
-    public static function from($value): self
+    public static function named(string $name, $value): self
     {
-        return new self($value);
+        return new self($value, $name);
     }
 
     /**
-     * @param mixed $value
+     * @param mixed     $value
+     * @param string    ...$keys
      */
-    public function __construct($value)
+    public function __construct($value, string ...$keys)
     {
+        $this->keys = $keys;
         $this->value = $value;
     }
 
@@ -61,14 +69,15 @@ final class Field implements InputInterface
 
         switch (true) {
             case $input instanceof Field:
-            case $input instanceof NamedField:
+                return (new self($input->value, ...$this->keys, ...$input->keys))->validate(...$fs);
             case $input instanceof WrappedCallable:
+                return $input;
             case $input instanceof ErrorList:
-                return $input->validate(...$fs);
+                return $input->nested(...$this->keys);
         }
 
         throw new \InvalidArgumentException(
-            sprintf('The given callable must return an instance of Quanta\Field|Quanta\NamedField|Quanta\WrappedCallable|Quanta\ErrorList, %s returned', gettype($input))
+            sprintf('The given callable must return an instance of Quanta\Field|Quanta\WrappedCallable|Quanta\ErrorList, %s returned', gettype($input))
         );
     }
 
@@ -79,7 +88,7 @@ final class Field implements InputInterface
     {
         if (is_array($this->value)) {
             return array_map(function ($key, $value) use ($fs) {
-                return NamedField::from((string) $key, new self($value))->validate(...$fs);
+                return (new self($value, ...[...$this->keys, (string) $key]))->validate(...$fs);
             }, array_keys($this->value), $this->value);
         }
 
