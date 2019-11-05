@@ -38,6 +38,15 @@ final class WrappedCallable implements InputInterface
     }
 
     /**
+     * @param \Quanta\InputInterface ...$inputs
+     * @return \Quanta\InputInterface
+     */
+    public function flatinvoke(InputInterface ...$inputs): InputInterface
+    {
+        return $this(...$inputs)->bind(fn ($input) => $input);
+    }
+
+    /**
      * @inheritdoc
      */
     public function apply(InputInterface $input): InputInterface
@@ -75,7 +84,7 @@ final class WrappedCallable implements InputInterface
     }
 
     /**
-     * @return \Quanta\NamedField[]
+     * @inheritdoc
      */
     public function unpack(): array
     {

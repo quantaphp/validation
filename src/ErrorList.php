@@ -55,7 +55,7 @@ final class ErrorList implements InputInterface
     }
 
     /**
-     * @return \Quanta\ErrorList[]
+     * @inheritdoc
      */
     public function unpack(): array
     {

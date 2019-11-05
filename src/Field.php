@@ -57,7 +57,7 @@ final class Field implements InputInterface
     }
 
     /**
-     * @return \Quanta\NamedField[]
+     * @inheritdoc
      */
     public function unpack(): array
     {
