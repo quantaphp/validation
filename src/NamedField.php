@@ -56,12 +56,13 @@ final class NamedField implements InputInterface
     {
         $input = $this->field->bind($f);
 
-        if ($input instanceof Field || $input instanceof NamedField || $input instanceof WrappedCallable) {
-            return new self($this->name, $input);
-        }
-
-        if ($input instanceof ErrorList) {
-            return $input->named($this->name);
+        switch (true) {
+            case $input instanceof Field:
+            case $input instanceof NamedField:
+            case $input instanceof WrappedCallable:
+                return new self($this->name, $input);
+            case $input instanceof ErrorList:
+                return $input->named($this->name);
         }
     }
 

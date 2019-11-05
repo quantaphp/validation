@@ -34,12 +34,11 @@ final class ErrorList implements InputInterface
      */
     public function apply(InputInterface $input): InputInterface
     {
-        if ($input instanceof WrappedCallable) {
-            return $this;
-        }
-
-        if ($input instanceof ErrorList) {
-            return new self(...$input->errors, ...$this->errors);
+        switch (true) {
+            case $input instanceof WrappedCallable:
+                return $this;
+            case $input instanceof ErrorList:
+                return new self(...$input->errors, ...$this->errors);
         }
 
         throw new \InvalidArgumentException(

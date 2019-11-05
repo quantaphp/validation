@@ -24,12 +24,11 @@ final class Field implements InputInterface
      */
     public function apply(InputInterface $input): InputInterface
     {
-        if ($input instanceof WrappedCallable) {
-            return $input->curryed($this->value);
-        }
-
-        if ($input instanceof ErrorList) {
-            return $input;
+        switch (true) {
+            case $input instanceof WrappedCallable:
+                return $input->curryed($this->value);
+            case $input instanceof ErrorList:
+                return $input;
         }
 
         throw new \InvalidArgumentException(
@@ -44,8 +43,12 @@ final class Field implements InputInterface
     {
         $input = $f($this->value);
 
-        if ($input instanceof Field || $input instanceof NamedField || $input instanceof WrappedCallable || $input instanceof ErrorList) {
-            return $input;
+        switch (true) {
+            case $input instanceof Field:
+            case $input instanceof NamedField:
+            case $input instanceof WrappedCallable:
+            case $input instanceof ErrorList:
+                return $input;
         }
 
         throw new \InvalidArgumentException(
