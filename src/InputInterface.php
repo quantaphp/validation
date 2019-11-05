@@ -7,12 +7,20 @@ namespace Quanta;
 interface InputInterface
 {
     /**
-     * Apply the wrapped value on the given wrapped callable.
+     * Call the given wrapped callable with the wrapped value.
      *
      * @param \Quanta\InputInterface $f
      * @return \Quanta\InputInterface
      */
     public function apply(InputInterface $f): InputInterface;
+
+    /**
+     * Call the given wrapping callable with the wrapped value.
+     *
+     * @param callable(mixed $value): \Quanta\InputInterface $f
+     * @return \Quanta\InputInterface
+     */
+    public function bind(callable $f): InputInterface;
 
     /**
      * Call the given wrapping callable with the wrapped value.

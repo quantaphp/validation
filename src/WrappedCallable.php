@@ -67,16 +67,34 @@ final class WrappedCallable implements InputInterface
      */
     public function apply(InputInterface $input): InputInterface
     {
-        if ($input instanceof WrappedCallable) {
-            return $input->curryed(($this->f)());
-        }
-
-        if ($input instanceof Failure) {
-            return $input;
+        switch (true) {
+            case $input instanceof Failure:
+                return $input;
+            case $input instanceof WrappedCallable:
+                return $input->curryed(($this->f)());
         }
 
         throw new \InvalidArgumentException(
             sprintf('The given argument must be an instance of Quanta\WrappedCallable|Quanta\Failure, %s given', gettype($input))
+        );
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function bind(callable $f): InputInterface
+    {
+        $input = $f(($this->f)());
+
+        switch (true) {
+            case $input instanceof Success:
+            case $input instanceof Failure:
+            case $input instanceof WrappedCallable:
+                return $input->nested(...$this->keys);
+        }
+
+        throw new \InvalidArgumentException(
+            sprintf('The given callable must return an instance of Quanta\Success|Quanta\WrappedCallable|Quanta\Failure, %s returned', gettype($input))
         );
     }
 
@@ -92,19 +110,7 @@ final class WrappedCallable implements InputInterface
         /** @var callable */
         $f = array_shift($fs);
 
-        $input = $f(($this->f)());
-
-        if ($input instanceof Success || $input instanceof WrappedCallable) {
-            return $input->nested(...$this->keys)->validate(...$fs);
-        }
-
-        if ($input instanceof Failure) {
-            return $input->nested(...$this->keys);
-        }
-
-        throw new \InvalidArgumentException(
-            sprintf('The given callable must return an instance of Quanta\Success|Quanta\WrappedCallable|Quanta\Failure, %s returned', gettype($input))
-        );
+        return $this->bind($f)->validate(...$fs);
     }
 
     /**

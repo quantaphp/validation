@@ -52,17 +52,24 @@ final class Failure implements InputInterface
      */
     public function apply(InputInterface $input): InputInterface
     {
-        if ($input instanceof WrappedCallable) {
-            return $this;
-        }
-
-        if ($input instanceof Failure) {
-            return new self(...$input->errors, ...$this->errors);
+        switch (true) {
+            case $input instanceof Failure:
+                return new self(...$input->errors, ...$this->errors);
+            case $input instanceof WrappedCallable:
+                return $this;
         }
 
         throw new \InvalidArgumentException(
             sprintf('The given argument must be an instance of Quanta\WrappedCallable|Quanta\Failure, %s given', gettype($input))
         );
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function bind(callable $f): InputInterface
+    {
+        return $this;
     }
 
     /**
