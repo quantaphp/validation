@@ -13,6 +13,15 @@ final class Field implements InputInterface
 
     /**
      * @param mixed $value
+     * @return \Quanta\Field
+     */
+    public static function from($value): self
+    {
+        return new self($value);
+    }
+
+    /**
+     * @param mixed $value
      */
     public function __construct($value)
     {

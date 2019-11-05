@@ -12,7 +12,7 @@ final class Input
      */
     public static function unit($value): Field
     {
-        return new Field($value);
+        return Field::from($value);
     }
 
     /**
@@ -23,7 +23,7 @@ final class Input
      */
     public static function pure(callable $f): WrappedCallable
     {
-        return new WrappedCallable($f);
+        return WrappedCallable::from($f);
     }
 
     /**
@@ -34,7 +34,7 @@ final class Input
      */
     public static function map(callable $f): callable
     {
-        return fn (InputInterface $input) => $input->apply(new WrappedCallable($f));
+        return fn (InputInterface $input) => $input->apply(self::pure($f));
     }
 
     /**

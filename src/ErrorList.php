@@ -14,6 +14,16 @@ final class ErrorList implements InputInterface
     /**
      * @param \Quanta\ErrorInterface    $error
      * @param \Quanta\ErrorInterface    ...$errors
+     * @return \Quanta\ErrorList
+     */
+    public static function from(ErrorInterface $error, ErrorInterface ...$errors): self
+    {
+        return new self($error, ...$errors);
+    }
+
+    /**
+     * @param \Quanta\ErrorInterface    $error
+     * @param \Quanta\ErrorInterface    ...$errors
      */
     public function __construct(ErrorInterface $error, ErrorInterface ...$errors)
     {

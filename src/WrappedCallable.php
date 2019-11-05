@@ -13,6 +13,15 @@ final class WrappedCallable implements InputInterface
 
     /**
      * @param callable $f
+     * @return \Quanta\WrappedCallable
+     */
+    public static function from(callable $f): self
+    {
+        return new self($f);
+    }
+
+    /**
+     * @param callable $f
      */
     public function __construct(callable $f)
     {

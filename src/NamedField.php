@@ -14,31 +14,34 @@ final class NamedField implements InputInterface
     /**
      * @var \Quanta\Field|\Quanta\NamedField|\Quanta\WrappedCallable
      */
-    private $field;
+    private $input;
 
     /**
      * @param string                    $name
-     * @param \Quanta\InputInterface    $field
+     * @param \Quanta\InputInterface    $input
      */
-    public static function from(string $name, InputInterface $field): self
+    public static function from(string $name, InputInterface $input): self
     {
-        if ($field instanceof Field || $field instanceof NamedField || $field instanceof WrappedCallable) {
-            return new self($name, $field);
+        switch (true) {
+            case $input instanceof Field:
+            case $input instanceof NamedField:
+            case $input instanceof WrappedCallable:
+                return new self($name, $input);
         }
 
         throw new \InvalidArgumentException(
-            sprintf('The given field must be an instance of Quanta\Field|Quanta\NamedField, instance of %s given', get_class($field))
+            sprintf('The given input must be an instance of Quanta\Field|Quanta\NamedField|Quanta\WrappedCallable, instance of %s given', get_class($input))
         );
     }
 
     /**
      * @param string                                                    $name
-     * @param \Quanta\Field|\Quanta\NamedField|\Quanta\WrappedCallable  $field
+     * @param \Quanta\Field|\Quanta\NamedField|\Quanta\WrappedCallable  $input
      */
-    private function __construct(string $name, $field)
+    private function __construct(string $name, $input)
     {
         $this->name = $name;
-        $this->field = $field;
+        $this->input = $input;
     }
 
     /**
@@ -46,7 +49,7 @@ final class NamedField implements InputInterface
      */
     public function apply(InputInterface $input): InputInterface
     {
-        return $this->field->apply($input);
+        return $this->input->apply($input);
     }
 
     /**
@@ -54,7 +57,7 @@ final class NamedField implements InputInterface
      */
     public function validate(callable ...$fs): InputInterface
     {
-        $input = $this->field->validate(...$fs);
+        $input = $this->input->validate(...$fs);
 
         switch (true) {
             case $input instanceof Field:
@@ -71,7 +74,7 @@ final class NamedField implements InputInterface
      */
     public function unpack(callable ...$fs): array
     {
-        return array_map(fn ($input) => new self($this->name, $input), $this->field->unpack(...$fs));
+        return array_map(fn ($input) => new self($this->name, $input), $this->input->unpack(...$fs));
     }
 
     /**
@@ -79,6 +82,6 @@ final class NamedField implements InputInterface
      */
     public function extract(callable $success, callable $failure)
     {
-        return $this->field->extract($success, $failure);
+        return $this->input->extract($success, $failure);
     }
 }
