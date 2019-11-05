@@ -37,6 +37,15 @@ final class Success implements InputInterface
     }
 
     /**
+     * @param string ...$keys
+     * @return \Quanta\Success
+     */
+    public function nested(string ...$keys): self
+    {
+        return count($keys) == 0 ? $this : new self($this->value, ...$keys, ...$this->keys);
+    }
+
+    /**
      * @inheritdoc
      */
     public function apply(InputInterface $input): InputInterface
@@ -68,8 +77,8 @@ final class Success implements InputInterface
 
         $input = $f($this->value);
 
-        if ($input instanceof Success) {
-            return (new self($input->value, ...$this->keys, ...$input->keys))->validate(...$fs);
+        if ($input instanceof Success || $input instanceof WrappedCallable) {
+            return $input->nested(...$this->keys)->validate(...$fs);
         }
 
         if ($input instanceof Failure) {
@@ -77,7 +86,7 @@ final class Success implements InputInterface
         }
 
         throw new \InvalidArgumentException(
-            sprintf('The given callable must return an instance of Quanta\Success|Quanta\Failure, %s returned', gettype($input))
+            sprintf('The given callable must return an instance of Quanta\Success|Quanta\WrappedCallable|Quanta\Failure, %s returned', gettype($input))
         );
     }
 

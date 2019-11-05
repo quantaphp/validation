@@ -7,16 +7,32 @@ namespace Quanta;
 final class WrappedCallable implements InputInterface
 {
     /**
+     * @var string[]
+     */
+    private $keys;
+
+    /**
      * @var callable
      */
     private $f;
 
     /**
-     * @param callable $f
+     * @param callable  $f
+     * @param string    ...$keys
      */
-    public function __construct(callable $f)
+    public function __construct(callable $f, string ...$keys)
     {
+        $this->keys = $keys;
         $this->f = $f;
+    }
+
+    /**
+     * @param string ...$keys
+     * @return \Quanta\WrappedCallable
+     */
+    public function nested(string ...$keys): self
+    {
+        return count($keys) == 0 ? $this : new self($this->f, ...$keys, ...$this->keys);
     }
 
     /**
@@ -25,7 +41,7 @@ final class WrappedCallable implements InputInterface
      */
     public function curryed($x): self
     {
-        return new self(fn (...$xs) => ($this->f)($x, ...$xs));
+        return new self(fn (...$xs) => ($this->f)($x, ...$xs), ...$this->keys);
     }
 
     /**
@@ -78,16 +94,16 @@ final class WrappedCallable implements InputInterface
 
         $input = $f(($this->f)());
 
-        if ($input instanceof Success) {
-            return $input->validate(...$fs);
+        if ($input instanceof Success || $input instanceof WrappedCallable) {
+            return $input->nested(...$this->keys)->validate(...$fs);
         }
 
         if ($input instanceof Failure) {
-            return $input;
+            return $input->nested(...$this->keys);
         }
 
         throw new \InvalidArgumentException(
-            sprintf('The given callable must return an instance of Quanta\Success|Quanta\Failure, %s returned', gettype($input))
+            sprintf('The given callable must return an instance of Quanta\Success|Quanta\WrappedCallable|Quanta\Failure, %s returned', gettype($input))
         );
     }
 
@@ -100,7 +116,7 @@ final class WrappedCallable implements InputInterface
 
         if (is_array($value)) {
             return array_map(function ($key, $value) use ($fs) {
-                return (new Success($value, (string) $key))->validate(...$fs);
+                return (new Success($value, ...[...$this->keys, (string) $key]))->validate(...$fs);
             }, array_keys($value), $value);
         }
 
