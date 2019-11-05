@@ -43,7 +43,7 @@ final class WrappedCallable implements InputInterface
      */
     public function flatinvoke(InputInterface ...$inputs): InputInterface
     {
-        return $this(...$inputs)->bind(fn ($input) => $input);
+        return $this(...$inputs)->validate(fn ($input) => $input);
     }
 
     /**
@@ -66,8 +66,15 @@ final class WrappedCallable implements InputInterface
     /**
      * @inheritdoc
      */
-    public function bind(callable $f): InputInterface
+    public function validate(callable ...$fs): InputInterface
     {
+        if (count($fs) == 0) {
+            return $this;
+        }
+
+        /** @var callable */
+        $f = array_shift($fs);
+
         $input = $f(($this->f)());
 
         switch (true) {
@@ -75,7 +82,7 @@ final class WrappedCallable implements InputInterface
             case $input instanceof NamedField:
             case $input instanceof WrappedCallable:
             case $input instanceof ErrorList:
-                return $input;
+                return $input->validate(...$fs);
         }
 
         throw new \InvalidArgumentException(
@@ -86,13 +93,13 @@ final class WrappedCallable implements InputInterface
     /**
      * @inheritdoc
      */
-    public function unpack(): array
+    public function unpack(callable ...$fs): array
     {
         $value = ($this->f)();
 
         if (is_array($value)) {
-            return array_map(function ($key, $value) {
-                return NamedField::from((string) $key, new self($value));
+            return array_map(function ($key, $value) use ($fs) {
+                return NamedField::from((string) $key, new self($value))->validate(...$fs);
             }, array_keys($value), $value);
         }
 

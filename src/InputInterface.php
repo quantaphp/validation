@@ -17,18 +17,19 @@ interface InputInterface
     /**
      * Call the given wrapping callable with the wrapped value.
      *
-     * @param callable(mixed $value): \Quanta\InputInterface $f
+     * @param callable(mixed $value): \Quanta\InputInterface ...$fs
      * @return \Quanta\InputInterface
      */
-    public function bind(callable $f): InputInterface;
+    public function validate(callable ...$fs): InputInterface;
 
     /**
      * Return an array of wrapped values from the wrapped array.
      *
+     * @param callable(mixed $value): \Quanta\InputInterface ...$fs
      * @return \Quanta\InputInterface[]
      * @throws \LogicException
      */
-    public function unpack(): array;
+    public function unpack(callable ...$fs): array;
 
     /**
      * Apply the given success callable on successful value or the failure callable on errors.

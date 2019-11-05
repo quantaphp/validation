@@ -52,9 +52,9 @@ final class NamedField implements InputInterface
     /**
      * @inheritdoc
      */
-    public function bind(callable $f): InputInterface
+    public function validate(callable ...$fs): InputInterface
     {
-        $input = $this->field->bind($f);
+        $input = $this->field->validate(...$fs);
 
         switch (true) {
             case $input instanceof Field:
@@ -69,9 +69,9 @@ final class NamedField implements InputInterface
     /**
      * @inheritdoc
      */
-    public function unpack(): array
+    public function unpack(callable ...$fs): array
     {
-        return array_map(fn ($input) => new self($this->name, $input), $this->field->unpack());
+        return array_map(fn ($input) => new self($this->name, $input), $this->field->unpack(...$fs));
     }
 
     /**

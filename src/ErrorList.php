@@ -49,7 +49,7 @@ final class ErrorList implements InputInterface
     /**
      * @inheritdoc
      */
-    public function bind(callable $f): InputInterface
+    public function validate(callable ...$fs): InputInterface
     {
         return $this;
     }
@@ -57,7 +57,7 @@ final class ErrorList implements InputInterface
     /**
      * @inheritdoc
      */
-    public function unpack(): array
+    public function unpack(callable ...$fs): array
     {
         return [$this];
     }

@@ -56,6 +56,6 @@ final class Input
      */
     public static function bind(callable $f): callable
     {
-        return fn (InputInterface $input) => $input->bind($f);
+        return fn (InputInterface $input) => $input->validate($f);
     }
 }
