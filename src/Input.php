@@ -8,11 +8,11 @@ final class Input
      * a -> Input<a>
      *
      * @param mixed $value
-     * @return \Quanta\Field
+     * @return \Quanta\Success
      */
-    public static function unit($value): Field
+    public static function unit($value): Success
     {
-        return new Field($value);
+        return new Success($value);
     }
 
     /**

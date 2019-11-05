@@ -51,15 +51,16 @@ final class WrappedCallable implements InputInterface
      */
     public function apply(InputInterface $input): InputInterface
     {
-        switch (true) {
-            case $input instanceof WrappedCallable:
-                return $input->curryed(($this->f)());
-            case $input instanceof ErrorList:
-                return $input;
+        if ($input instanceof WrappedCallable) {
+            return $input->curryed(($this->f)());
+        }
+
+        if ($input instanceof Failure) {
+            return $input;
         }
 
         throw new \InvalidArgumentException(
-            sprintf('The given argument must be an instance of Quanta\WrappedCallable|Quanta\ErrorList, %s given', gettype($input))
+            sprintf('The given argument must be an instance of Quanta\WrappedCallable|Quanta\Failure, %s given', gettype($input))
         );
     }
 
@@ -77,16 +78,16 @@ final class WrappedCallable implements InputInterface
 
         $input = $f(($this->f)());
 
-        switch (true) {
-            case $input instanceof Field:
-            case $input instanceof WrappedCallable:
-                return $input->validate(...$fs);
-            case $input instanceof ErrorList:
-                return $input;
+        if ($input instanceof Success) {
+            return $input->validate(...$fs);
+        }
+
+        if ($input instanceof Failure) {
+            return $input;
         }
 
         throw new \InvalidArgumentException(
-            sprintf('The given callable must return an instance of Quanta\Field|Quanta\WrappedCallable|Quanta\ErrorList, %s returned', gettype($input))
+            sprintf('The given callable must return an instance of Quanta\Success|Quanta\Failure, %s returned', gettype($input))
         );
     }
 
@@ -99,11 +100,11 @@ final class WrappedCallable implements InputInterface
 
         if (is_array($value)) {
             return array_map(function ($key, $value) use ($fs) {
-                return (new Field($value, (string) $key))->validate(...$fs);
+                return (new Success($value, (string) $key))->validate(...$fs);
             }, array_keys($value), $value);
         }
 
-        throw new \LogicException(sprintf('cannot unpack %s', gettype($value)));
+        throw new \LogicException(sprintf('Cannot unpack %s', gettype($value)));
     }
 
     /**

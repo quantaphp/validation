@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Quanta;
 
-final class Field implements InputInterface
+final class Success implements InputInterface
 {
     /**
      * @var string[]
@@ -19,7 +19,7 @@ final class Field implements InputInterface
     /**
      * @param string    $name
      * @param mixed     $value
-     * @return \Quanta\Field
+     * @return \Quanta\Success
      */
     public static function named(string $name, $value): self
     {
@@ -41,15 +41,16 @@ final class Field implements InputInterface
      */
     public function apply(InputInterface $input): InputInterface
     {
-        switch (true) {
-            case $input instanceof WrappedCallable:
-                return $input->curryed($this->value);
-            case $input instanceof ErrorList:
-                return $input;
+        if ($input instanceof WrappedCallable) {
+            return $input->curryed($this->value);
+        }
+
+        if ($input instanceof Failure) {
+            return $input;
         }
 
         throw new \InvalidArgumentException(
-            sprintf('The given argument must be an instance of Quanta\WrappedCallable|Quanta\ErrorList, %s given', gettype($input))
+            sprintf('The given argument must be an instance of Quanta\WrappedCallable|Quanta\Failure, %s given', gettype($input))
         );
     }
 
@@ -67,17 +68,16 @@ final class Field implements InputInterface
 
         $input = $f($this->value);
 
-        switch (true) {
-            case $input instanceof Field:
-                return (new self($input->value, ...$this->keys, ...$input->keys))->validate(...$fs);
-            case $input instanceof WrappedCallable:
-                return $input;
-            case $input instanceof ErrorList:
-                return $input->nested(...$this->keys);
+        if ($input instanceof Success) {
+            return (new self($input->value, ...$this->keys, ...$input->keys))->validate(...$fs);
+        }
+
+        if ($input instanceof Failure) {
+            return $input->nested(...$this->keys);
         }
 
         throw new \InvalidArgumentException(
-            sprintf('The given callable must return an instance of Quanta\Field|Quanta\WrappedCallable|Quanta\ErrorList, %s returned', gettype($input))
+            sprintf('The given callable must return an instance of Quanta\Success|Quanta\Failure, %s returned', gettype($input))
         );
     }
 
@@ -92,7 +92,7 @@ final class Field implements InputInterface
             }, array_keys($this->value), $this->value);
         }
 
-        throw new \LogicException(sprintf('cannot unpack %s', gettype($this->value)));
+        throw new \LogicException(sprintf('Cannot unpack %s', gettype($this->value)));
     }
 
     /**

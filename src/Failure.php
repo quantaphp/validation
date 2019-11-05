@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Quanta;
 
-final class ErrorList implements InputInterface
+final class Failure implements InputInterface
 {
     /**
      * @var \Quanta\ErrorInterface[]
@@ -15,7 +15,7 @@ final class ErrorList implements InputInterface
      * @param string                    $name
      * @param \Quanta\ErrorInterface    $error
      * @param \Quanta\ErrorInterface    ...$errors
-     * @return \Quanta\ErrorList
+     * @return \Quanta\Failure
      */
     public static function named(string $name, ErrorInterface $error, ErrorInterface ...$errors): self
     {
@@ -33,7 +33,7 @@ final class ErrorList implements InputInterface
 
     /**
      * @param string ...$keys
-     * @return \Quanta\ErrorList
+     * @return \Quanta\Failure
      */
     public function nested(string ...$keys): self
     {
@@ -52,15 +52,16 @@ final class ErrorList implements InputInterface
      */
     public function apply(InputInterface $input): InputInterface
     {
-        switch (true) {
-            case $input instanceof WrappedCallable:
-                return $this;
-            case $input instanceof ErrorList:
-                return new self(...$input->errors, ...$this->errors);
+        if ($input instanceof WrappedCallable) {
+            return $this;
+        }
+
+        if ($input instanceof Failure) {
+            return new self(...$input->errors, ...$this->errors);
         }
 
         throw new \InvalidArgumentException(
-            sprintf('The given argument must be an instance of Quanta\WrappedCallable|Quanta\ErrorList, %s given', gettype($input))
+            sprintf('The given argument must be an instance of Quanta\WrappedCallable|Quanta\Failure, %s given', gettype($input))
         );
     }
 
