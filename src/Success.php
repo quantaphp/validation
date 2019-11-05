@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Quanta;
+namespace Quanta\Validation;
 
 final class Success implements InputInterface
 {
@@ -19,7 +19,7 @@ final class Success implements InputInterface
     /**
      * @param string    $name
      * @param mixed     $value
-     * @return \Quanta\Success
+     * @return \Quanta\Validation\Success
      */
     public static function named(string $name, $value): self
     {
@@ -38,7 +38,7 @@ final class Success implements InputInterface
 
     /**
      * @param string ...$keys
-     * @return \Quanta\Success
+     * @return \Quanta\Validation\Success
      */
     public function nested(string ...$keys): self
     {
@@ -58,7 +58,7 @@ final class Success implements InputInterface
         }
 
         throw new \InvalidArgumentException(
-            sprintf('The given argument must be an instance of Quanta\WrappedCallable|Quanta\Failure, %s given', gettype($input))
+            sprintf('The given argument must be an instance of Quanta\Validation\WrappedCallable|Quanta\Validation\Failure, %s given', gettype($input))
         );
     }
 
@@ -77,7 +77,7 @@ final class Success implements InputInterface
         }
 
         throw new \InvalidArgumentException(
-            sprintf('The given callable must return an instance of Quanta\Success|Quanta\WrappedCallable|Quanta\Failure, %s returned', gettype($input))
+            sprintf('The given callable must return an instance of Quanta\Validation\Success|Quanta\Validation\WrappedCallable|Quanta\Validation\Failure, %s returned', gettype($input))
         );
     }
 

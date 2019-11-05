@@ -2,39 +2,39 @@
 
 declare(strict_types=1);
 
-namespace Quanta;
+namespace Quanta\Validation;
 
 interface InputInterface
 {
     /**
      * Call the given wrapped callable with the wrapped value.
      *
-     * @param \Quanta\InputInterface $f
-     * @return \Quanta\InputInterface
+     * @param \Quanta\Validation\InputInterface $f
+     * @return \Quanta\Validation\InputInterface
      */
     public function apply(InputInterface $f): InputInterface;
 
     /**
      * Call the given wrapping callable with the wrapped value.
      *
-     * @param callable(mixed $value): \Quanta\InputInterface $f
-     * @return \Quanta\InputInterface
+     * @param callable(mixed $value): \Quanta\Validation\InputInterface $f
+     * @return \Quanta\Validation\InputInterface
      */
     public function bind(callable $f): InputInterface;
 
     /**
      * Call the given wrapping callable with the wrapped value.
      *
-     * @param callable(mixed $value): \Quanta\InputInterface ...$fs
-     * @return \Quanta\InputInterface
+     * @param callable(mixed $value): \Quanta\Validation\InputInterface ...$fs
+     * @return \Quanta\Validation\InputInterface
      */
     public function validate(callable ...$fs): InputInterface;
 
     /**
      * Return an array of wrapped values from the wrapped array.
      *
-     * @param callable(mixed $value): \Quanta\InputInterface ...$fs
-     * @return \Quanta\InputInterface[]
+     * @param callable(mixed $value): \Quanta\Validation\InputInterface ...$fs
+     * @return \Quanta\Validation\InputInterface[]
      * @throws \LogicException
      */
     public function unpack(callable ...$fs): array;

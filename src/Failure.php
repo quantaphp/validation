@@ -2,20 +2,20 @@
 
 declare(strict_types=1);
 
-namespace Quanta;
+namespace Quanta\Validation;
 
 final class Failure implements InputInterface
 {
     /**
-     * @var \Quanta\ErrorInterface[]
+     * @var \Quanta\Validation\ErrorInterface[]
      */
     private $errors;
 
     /**
-     * @param string                    $name
-     * @param \Quanta\ErrorInterface    $error
-     * @param \Quanta\ErrorInterface    ...$errors
-     * @return \Quanta\Failure
+     * @param string                            $name
+     * @param \Quanta\Validation\ErrorInterface $error
+     * @param \Quanta\Validation\ErrorInterface ...$errors
+     * @return \Quanta\Validation\Failure
      */
     public static function named(string $name, ErrorInterface $error, ErrorInterface ...$errors): self
     {
@@ -23,8 +23,8 @@ final class Failure implements InputInterface
     }
 
     /**
-     * @param \Quanta\ErrorInterface    $error
-     * @param \Quanta\ErrorInterface    ...$errors
+     * @param \Quanta\Validation\ErrorInterface $error
+     * @param \Quanta\Validation\ErrorInterface ...$errors
      */
     public function __construct(ErrorInterface $error, ErrorInterface ...$errors)
     {
@@ -33,7 +33,7 @@ final class Failure implements InputInterface
 
     /**
      * @param string ...$keys
-     * @return \Quanta\Failure
+     * @return \Quanta\Validation\Failure
      */
     public function nested(string ...$keys): self
     {
@@ -60,7 +60,7 @@ final class Failure implements InputInterface
         }
 
         throw new \InvalidArgumentException(
-            sprintf('The given argument must be an instance of Quanta\WrappedCallable|Quanta\Failure, %s given', gettype($input))
+            sprintf('The given argument must be an instance of Quanta\Validation\WrappedCallable|Quanta\Validation\Failure, %s given', gettype($input))
         );
     }
 

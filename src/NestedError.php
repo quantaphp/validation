@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Quanta;
+namespace Quanta\Validation;
 
 final class NestedError implements ErrorInterface
 {
@@ -12,13 +12,13 @@ final class NestedError implements ErrorInterface
     private $key;
 
     /**
-     * @var \Quanta\ErrorInterface
+     * @var \Quanta\Validation\ErrorInterface
      */
     private $error;
 
     /**
-     * @param string                    $key
-     * @param \Quanta\ErrorInterface    $error
+     * @param string                            $key
+     * @param \Quanta\Validation\ErrorInterface $error
      */
     public function __construct(string $key, ErrorInterface $error)
     {

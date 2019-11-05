@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Quanta;
+namespace Quanta\Validation;
 
 final class WrappedCallable implements InputInterface
 {
@@ -28,7 +28,7 @@ final class WrappedCallable implements InputInterface
 
     /**
      * @param string ...$keys
-     * @return \Quanta\WrappedCallable
+     * @return \Quanta\Validation\WrappedCallable
      */
     public function nested(string ...$keys): self
     {
@@ -37,7 +37,7 @@ final class WrappedCallable implements InputInterface
 
     /**
      * @param mixed $x
-     * @return \Quanta\WrappedCallable
+     * @return \Quanta\Validation\WrappedCallable
      */
     public function curryed($x): self
     {
@@ -45,8 +45,8 @@ final class WrappedCallable implements InputInterface
     }
 
     /**
-     * @param \Quanta\InputInterface ...$inputs
-     * @return \Quanta\InputInterface
+     * @param \Quanta\Validation\InputInterface ...$inputs
+     * @return \Quanta\Validation\InputInterface
      */
     public function __invoke(InputInterface ...$inputs): InputInterface
     {
@@ -54,8 +54,8 @@ final class WrappedCallable implements InputInterface
     }
 
     /**
-     * @param \Quanta\InputInterface ...$inputs
-     * @return \Quanta\InputInterface
+     * @param \Quanta\Validation\InputInterface ...$inputs
+     * @return \Quanta\Validation\InputInterface
      */
     public function invoke(InputInterface ...$inputs): InputInterface
     {
@@ -63,8 +63,8 @@ final class WrappedCallable implements InputInterface
     }
 
     /**
-     * @param \Quanta\InputInterface ...$inputs
-     * @return \Quanta\InputInterface
+     * @param \Quanta\Validation\InputInterface ...$inputs
+     * @return \Quanta\Validation\InputInterface
      */
     public function flatinvoke(InputInterface ...$inputs): InputInterface
     {
@@ -84,7 +84,7 @@ final class WrappedCallable implements InputInterface
         }
 
         throw new \InvalidArgumentException(
-            sprintf('The given argument must be an instance of Quanta\WrappedCallable|Quanta\Failure, %s given', gettype($input))
+            sprintf('The given argument must be an instance of Quanta\Validation\WrappedCallable|Quanta\Validation\Failure, %s given', gettype($input))
         );
     }
 
@@ -103,7 +103,7 @@ final class WrappedCallable implements InputInterface
         }
 
         throw new \InvalidArgumentException(
-            sprintf('The given callable must return an instance of Quanta\Success|Quanta\WrappedCallable|Quanta\Failure, %s returned', gettype($input))
+            sprintf('The given callable must return an instance of Quanta\Validation\Success|Quanta\Validation\WrappedCallable|Quanta\Validation\Failure, %s returned', gettype($input))
         );
     }
 

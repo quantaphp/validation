@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Quanta;
+namespace Quanta\Validation;
 
 interface ErrorInterface
 {
