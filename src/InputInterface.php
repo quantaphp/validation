@@ -7,6 +7,14 @@ namespace Quanta\Validation;
 interface InputInterface
 {
     /**
+     * Nest the input within the given keys.
+     *
+     * @param string ...$keys
+     * @return \Quanta\Validation\InputInterface
+     */
+    public function nested(string ...$keys): InputInterface;
+
+    /**
      * Call the given wrapped callable with the wrapped value.
      *
      * @param \Quanta\Validation\InputInterface $f
