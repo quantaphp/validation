@@ -57,6 +57,15 @@ final class WrappedCallable implements InputInterface
      * @param \Quanta\InputInterface ...$inputs
      * @return \Quanta\InputInterface
      */
+    public function invoke(InputInterface ...$inputs): InputInterface
+    {
+        return $this(...$inputs);
+    }
+
+    /**
+     * @param \Quanta\InputInterface ...$inputs
+     * @return \Quanta\InputInterface
+     */
     public function flatinvoke(InputInterface ...$inputs): InputInterface
     {
         return $this(...$inputs)->validate(fn ($input) => $input);
