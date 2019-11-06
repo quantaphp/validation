@@ -72,8 +72,9 @@ final class Success implements InputInterface
         switch (true) {
             case $input instanceof Success:
             case $input instanceof Failure:
-            case $input instanceof WrappedCallable:
                 return $input->nested(...$this->keys);
+            case $input instanceof WrappedCallable:
+                return $input;
         }
 
         throw new \InvalidArgumentException(

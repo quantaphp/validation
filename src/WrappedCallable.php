@@ -7,32 +7,16 @@ namespace Quanta\Validation;
 final class WrappedCallable implements InputInterface
 {
     /**
-     * @var string[]
-     */
-    private $keys;
-
-    /**
      * @var callable
      */
     private $f;
 
     /**
      * @param callable  $f
-     * @param string    ...$keys
      */
-    public function __construct(callable $f, string ...$keys)
+    public function __construct(callable $f)
     {
-        $this->keys = $keys;
         $this->f = $f;
-    }
-
-    /**
-     * @param string ...$keys
-     * @return \Quanta\Validation\WrappedCallable
-     */
-    public function nested(string ...$keys): self
-    {
-        return count($keys) == 0 ? $this : new self($this->f, ...$keys, ...$this->keys);
     }
 
     /**
@@ -41,7 +25,7 @@ final class WrappedCallable implements InputInterface
      */
     public function curryed($x): self
     {
-        return new self(fn (...$xs) => ($this->f)($x, ...$xs), ...$this->keys);
+        return new self(fn (...$xs) => ($this->f)($x, ...$xs));
     }
 
     /**
@@ -68,7 +52,7 @@ final class WrappedCallable implements InputInterface
      */
     public function flatinvoke(InputInterface ...$inputs): InputInterface
     {
-        return $this(...$inputs)->validate(fn ($input) => $input);
+        return $this(...$inputs)->bind(fn ($input) => $input);
     }
 
     /**
@@ -99,7 +83,7 @@ final class WrappedCallable implements InputInterface
             case $input instanceof Success:
             case $input instanceof Failure:
             case $input instanceof WrappedCallable:
-                return $input->nested(...$this->keys);
+                return $input;
         }
 
         throw new \InvalidArgumentException(
@@ -131,7 +115,7 @@ final class WrappedCallable implements InputInterface
 
         if (is_array($value)) {
             return array_map(function ($key, $value) use ($fs) {
-                return (new Success($value, ...[...$this->keys, (string) $key]))->validate(...$fs);
+                return (new Success($value, (string) $key))->validate(...$fs);
             }, array_keys($value), $value);
         }
 
