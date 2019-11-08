@@ -29,17 +29,17 @@ final class NestedError implements ErrorInterface
     /**
      * @inheritdoc
      */
-    public function name(): string
+    public function label(): string
     {
-        return '[' . $this->key . ']' . $this->error->name();
+        return $this->error->label();
     }
 
     /**
      * @inheritdoc
      */
-    public function label(): string
+    public function name(): string
     {
-        return $this->error->label();
+        return '[' . $this->key . ']' . $this->error->name();
     }
 
     /**
@@ -55,6 +55,6 @@ final class NestedError implements ErrorInterface
      */
     public function message(): string
     {
-        return sprintf(vsprintf($this->label(), $this->params()), $this->name());
+        return $this->error->message();
     }
 }

@@ -9,6 +9,11 @@ final class Error implements ErrorInterface
     /**
      * @var string
      */
+    private $message;
+
+    /**
+     * @var string
+     */
     private $label;
 
     /**
@@ -17,21 +22,15 @@ final class Error implements ErrorInterface
     private $params;
 
     /**
+     * @param string    $message
      * @param string    $label
-     * @param mixed     ...$params
+     * @param array     $params
      */
-    public function __construct(string $label, ...$params)
+    public function __construct(string $message, string $label = '', array $params = [])
     {
+        $this->message = $message;
         $this->label = $label;
         $this->params = $params;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function name(): string
-    {
-        return '';
     }
 
     /**
@@ -40,6 +39,14 @@ final class Error implements ErrorInterface
     public function label(): string
     {
         return $this->label;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function name(): string
+    {
+        return '';
     }
 
     /**
@@ -55,6 +62,6 @@ final class Error implements ErrorInterface
      */
     public function message(): string
     {
-        return sprintf(vsprintf($this->label, $this->params), 'Input');
+        return $this->message;
     }
 }
