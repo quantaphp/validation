@@ -60,11 +60,12 @@ final class WrappedCallable implements InputInterface
      */
     public function apply(InputInterface $input): InputInterface
     {
-        switch (true) {
-            case $input instanceof Failure:
-                return $input;
-            case $input instanceof WrappedCallable:
-                return $input->curryed(($this->f)());
+        if ($input instanceof Failure) {
+            return $input;
+        }
+
+        if ($input instanceof WrappedCallable) {
+            return $input->curryed(($this->f)());
         }
 
         throw new \InvalidArgumentException(
@@ -79,11 +80,8 @@ final class WrappedCallable implements InputInterface
     {
         $input = $f(($this->f)());
 
-        switch (true) {
-            case $input instanceof Success:
-            case $input instanceof Failure:
-            case $input instanceof WrappedCallable:
-                return $input;
+        if ($input instanceof Success || $input instanceof Failure || $input instanceof WrappedCallable) {
+            return $input;
         }
 
         throw new \InvalidArgumentException(

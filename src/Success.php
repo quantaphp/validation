@@ -17,16 +17,6 @@ final class Success implements InputInterface
     private $value;
 
     /**
-     * @param string    $name
-     * @param mixed     $value
-     * @return \Quanta\Validation\Success
-     */
-    public static function named(string $name, $value): self
-    {
-        return new self($value, $name);
-    }
-
-    /**
      * @param mixed     $value
      * @param string    ...$keys
      */
@@ -37,24 +27,16 @@ final class Success implements InputInterface
     }
 
     /**
-     * @param string ...$keys
-     * @return \Quanta\Validation\Success
-     */
-    public function nested(string ...$keys): self
-    {
-        return count($keys) == 0 ? $this : new self($this->value, ...$keys, ...$this->keys);
-    }
-
-    /**
      * @inheritdoc
      */
     public function apply(InputInterface $input): InputInterface
     {
-        switch (true) {
-            case $input instanceof Failure:
-                return $input;
-            case $input instanceof WrappedCallable:
-                return $input->curryed($this->value);
+        if ($input instanceof Failure) {
+            return $input;
+        }
+
+        if ($input instanceof WrappedCallable) {
+            return $input->curryed($this->value);
         }
 
         throw new \InvalidArgumentException(
@@ -69,12 +51,16 @@ final class Success implements InputInterface
     {
         $input = $f($this->value);
 
-        switch (true) {
-            case $input instanceof Success:
-            case $input instanceof Failure:
-                return $input->nested(...$this->keys);
-            case $input instanceof WrappedCallable:
-                return $input;
+        if ($input instanceof Success) {
+            return new self($input->value, ...$this->keys, ...$input->keys);
+        }
+
+        if ($input instanceof Failure) {
+            return $input->nested(...$this->keys);
+        }
+
+        if ($input instanceof WrappedCallable) {
+            return $input;
         }
 
         throw new \InvalidArgumentException(

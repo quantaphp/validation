@@ -12,17 +12,6 @@ final class Failure implements InputInterface
     private $errors;
 
     /**
-     * @param string                            $name
-     * @param \Quanta\Validation\ErrorInterface $error
-     * @param \Quanta\Validation\ErrorInterface ...$errors
-     * @return \Quanta\Validation\Failure
-     */
-    public static function named(string $name, ErrorInterface $error, ErrorInterface ...$errors): self
-    {
-        return (new self($error, ...$errors))->nested($name);
-    }
-
-    /**
      * @param \Quanta\Validation\ErrorInterface $error
      * @param \Quanta\Validation\ErrorInterface ...$errors
      */
@@ -52,11 +41,12 @@ final class Failure implements InputInterface
      */
     public function apply(InputInterface $input): InputInterface
     {
-        switch (true) {
-            case $input instanceof Failure:
-                return new self(...$input->errors, ...$this->errors);
-            case $input instanceof WrappedCallable:
-                return $this;
+        if ($input instanceof Failure) {
+            return new self(...$input->errors, ...$this->errors);
+        }
+
+        if ($input instanceof WrappedCallable) {
+            return $this;
         }
 
         throw new \InvalidArgumentException(
