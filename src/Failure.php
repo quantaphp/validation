@@ -57,15 +57,7 @@ final class Failure implements InputInterface
     /**
      * @inheritdoc
      */
-    public function bind(callable $f): InputInterface
-    {
-        return $this;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function validate(callable ...$fs): InputInterface
+    public function bind(callable ...$fs): InputInterface
     {
         return $this;
     }

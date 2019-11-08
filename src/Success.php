@@ -47,20 +47,27 @@ final class Success implements InputInterface
     /**
      * @inheritdoc
      */
-    public function bind(callable $f): InputInterface
+    public function bind(callable ...$fs): InputInterface
     {
+        if (count($fs) == 0) {
+            return $this;
+        }
+
+        /** @var callable */
+        $f = array_shift($fs);
+
         $input = $f($this->value);
 
         if ($input instanceof Success) {
-            return new self($input->value, ...$this->keys, ...$input->keys);
+            return (new self($input->value, ...$this->keys, ...$input->keys))->bind(...$fs);
         }
 
         if ($input instanceof Failure) {
-            return $input->nested(...$this->keys);
+            return $input->nested(...$this->keys)->bind(...$fs);
         }
 
         if ($input instanceof WrappedCallable) {
-            return $input;
+            return $input->bind(...$fs);
         }
 
         throw new \InvalidArgumentException(
@@ -71,26 +78,11 @@ final class Success implements InputInterface
     /**
      * @inheritdoc
      */
-    public function validate(callable ...$fs): InputInterface
-    {
-        if (count($fs) == 0) {
-            return $this;
-        }
-
-        /** @var callable */
-        $f = array_shift($fs);
-
-        return $this->bind($f)->validate(...$fs);
-    }
-
-    /**
-     * @inheritdoc
-     */
     public function unpack(callable ...$fs): array
     {
         if (is_array($this->value)) {
             return array_map(function ($key, $value) use ($fs) {
-                return (new self($value, ...[...$this->keys, (string) $key]))->validate(...$fs);
+                return (new self($value, ...[...$this->keys, (string) $key]))->bind(...$fs);
             }, array_keys($this->value), $this->value);
         }
 

@@ -76,23 +76,7 @@ final class WrappedCallable implements InputInterface
     /**
      * @inheritdoc
      */
-    public function bind(callable $f): InputInterface
-    {
-        $input = $f(($this->f)());
-
-        if ($input instanceof Success || $input instanceof Failure || $input instanceof WrappedCallable) {
-            return $input;
-        }
-
-        throw new \InvalidArgumentException(
-            sprintf('The given callable must return an instance of Quanta\Validation\Success|Quanta\Validation\WrappedCallable|Quanta\Validation\Failure, %s returned', gettype($input))
-        );
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function validate(callable ...$fs): InputInterface
+    public function bind(callable ...$fs): InputInterface
     {
         if (count($fs) == 0) {
             return $this;
@@ -101,7 +85,15 @@ final class WrappedCallable implements InputInterface
         /** @var callable */
         $f = array_shift($fs);
 
-        return $this->bind($f)->validate(...$fs);
+        $input = $f(($this->f)());
+
+        if ($input instanceof Success || $input instanceof Failure || $input instanceof WrappedCallable) {
+            return $input->bind(...$fs);
+        }
+
+        throw new \InvalidArgumentException(
+            sprintf('The given callable must return an instance of Quanta\Validation\Success|Quanta\Validation\WrappedCallable|Quanta\Validation\Failure, %s returned', gettype($input))
+        );
     }
 
     /**
@@ -113,7 +105,7 @@ final class WrappedCallable implements InputInterface
 
         if (is_array($value)) {
             return array_map(function ($key, $value) use ($fs) {
-                return (new Success($value, (string) $key))->validate(...$fs);
+                return (new Success($value, (string) $key))->bind(...$fs);
             }, array_keys($value), $value);
         }
 
