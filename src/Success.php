@@ -78,20 +78,6 @@ final class Success implements InputInterface
     /**
      * @inheritdoc
      */
-    public function unpack(callable ...$fs): array
-    {
-        if (is_array($this->value)) {
-            return array_map(function ($key, $value) use ($fs) {
-                return (new self($value, ...[...$this->keys, (string) $key]))->bind(...$fs);
-            }, array_keys($this->value), $this->value);
-        }
-
-        throw new \LogicException(sprintf('Cannot unpack %s', gettype($this->value)));
-    }
-
-    /**
-     * @inheritdoc
-     */
     public function extract(callable $success, callable $failure)
     {
         return $success($this->value);

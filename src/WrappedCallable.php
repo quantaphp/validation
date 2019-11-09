@@ -99,22 +99,6 @@ final class WrappedCallable implements InputInterface
     /**
      * @inheritdoc
      */
-    public function unpack(callable ...$fs): array
-    {
-        $value = ($this->f)();
-
-        if (is_array($value)) {
-            return array_map(function ($key, $value) use ($fs) {
-                return (new Success($value, (string) $key))->bind(...$fs);
-            }, array_keys($value), $value);
-        }
-
-        throw new \LogicException(sprintf('Cannot unpack %s', gettype($value)));
-    }
-
-    /**
-     * @inheritdoc
-     */
     public function extract(callable $success, callable $failure)
     {
         return $success(($this->f)());

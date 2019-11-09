@@ -65,14 +65,6 @@ final class Failure implements InputInterface
     /**
      * @inheritdoc
      */
-    public function unpack(callable ...$fs): array
-    {
-        return [$this];
-    }
-
-    /**
-     * @inheritdoc
-     */
     public function extract(callable $success, callable $failure)
     {
         return $failure(...$this->errors);

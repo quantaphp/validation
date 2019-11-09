@@ -23,15 +23,6 @@ interface InputInterface
     public function bind(callable ...$fs): InputInterface;
 
     /**
-     * Return an array of wrapped values from the wrapped array.
-     *
-     * @param callable(mixed $value): \Quanta\Validation\InputInterface ...$fs
-     * @return \Quanta\Validation\InputInterface[]
-     * @throws \LogicException
-     */
-    public function unpack(callable ...$fs): array;
-
-    /**
      * Apply the given success callable on successful value or the failure callable on errors.
      *
      * @param callable(mixed $a): mixed                     $success
