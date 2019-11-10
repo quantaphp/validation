@@ -41,16 +41,16 @@ final class Failure implements InputInterface
      */
     public function apply(InputInterface $input): InputInterface
     {
+        if ($input instanceof Success) {
+            return $this;
+        }
+
         if ($input instanceof Failure) {
             return new self(...$input->errors, ...$this->errors);
         }
 
-        if ($input instanceof WrappedCallable) {
-            return $this;
-        }
-
         throw new \InvalidArgumentException(
-            sprintf('The given argument must be an instance of Quanta\Validation\WrappedCallable|Quanta\Validation\Failure, %s given', gettype($input))
+            sprintf('The given argument must be an instance of Quanta\Validation\Success|Quanta\Validation\Failure, %s given', gettype($input))
         );
     }
 

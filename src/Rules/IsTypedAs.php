@@ -12,17 +12,17 @@ use Quanta\Validation\InputInterface;
 final class IsTypedAs
 {
     const MAP = [
-        'bool' => [['boolean'], '%%s => must be a boolean'],
-        'boolean' => [['boolean'], '%%s => must be a boolean'],
-        'int' => [['integer'], '%%s => must be an integer'],
-        'integer' => [['integer'], '%%s => must be an integer'],
-        'float' => [['integer', 'double'], '%%s => must be a float'],
-        'double' => [['integer', 'double'], '%%s => must be a float'],
-        'number' => [['integer', 'double'], '%%s => must be a number'],
-        'string' => [['string'], '%%s => must be a string'],
-        'array' => [['array'], '%%s => must be an array'],
-        'resource' => [['resource'], '%%s => must be an resource'],
-        'null' => [['null'], '%%s => must be null'],
+        'bool' => [['boolean'], 'must be a boolean'],
+        'boolean' => [['boolean'], 'must be a boolean'],
+        'int' => [['integer'], 'must be an integer'],
+        'integer' => [['integer'], 'must be an integer'],
+        'float' => [['integer', 'double'], 'must be a float'],
+        'double' => [['integer', 'double'], 'must be a float'],
+        'number' => [['integer', 'double'], 'must be a number'],
+        'string' => [['string'], 'must be a string'],
+        'array' => [['array'], 'must be an array'],
+        'resource' => [['resource'], 'must be an resource'],
+        'null' => [['null'], 'must be null'],
     ];
 
     private $type;
@@ -46,6 +46,6 @@ final class IsTypedAs
 
         return is_object($value) && $value instanceof $this->type
             ? new Success($value)
-            : new Failure(new Error('%%s must be an instance of %s', $this->type));
+            : new Failure(new Error('must be an instance of %s', $this->type));
     }
 }

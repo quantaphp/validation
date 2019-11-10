@@ -10,51 +10,43 @@ final class Input
      * a -> Input<a>
      *
      * @param mixed $value
-     * @return \Quanta\Validation\Success
+     * @return \Quanta\Validation\InputInterface
      */
-    public static function unit($value): Success
+    public static function unit($value): InputInterface
     {
         return new Success($value);
     }
 
     /**
-     * (a -> b) -> Input<a -> b>
+     * (a -> ... -> b) -> Input<a> -> ... -> Input<b>
      *
      * @param callable $f
-     * @return \Quanta\Validation\WrappedCallable
-     */
-    public static function pure(callable $f): WrappedCallable
-    {
-        return new WrappedCallable($f);
-    }
-
-    /**
-     * (a -> b) -> Input<a> -> Input<b>
-     *
-     * @param callable $f
-     * @return callable(\Quanta\Validation\InputInterface $a): InputInterface
+     * @return callable(\Quanta\Validation\InputInterface ...$inputs): \Quanta\Validation\InputInterface
      */
     public static function map(callable $f): callable
     {
-        return fn (InputInterface $input) => $input->apply(self::pure($f));
+        return self::apply(self::unit($f));
     }
 
     /**
-     * Input<a -> b> -> Input<a> -> Input<b>
+     * Input<a -> ... -> b> -> Input<a> -> ... -> Input<b>
      *
-     * @param \Quanta\Validation\InputInterface $f
-     * @return callable(\Quanta\Validation\InputInterface $a): InputInterface
+     * @param \Quanta\Validation\InputInterface $input
+     * @return callable(\Quanta\Validation\InputInterface ...$inputs): \Quanta\Validation\InputInterface
      */
-    public static function apply(InputInterface $f): callable
+    public static function apply(InputInterface $input): callable
     {
-        return fn (InputInterface $input) => $input->apply($f);
+        $reduce = fn ($f, $x) => $x->apply($f);
+        $execute = fn ($f) => self::unit($f());
+
+        return fn (InputInterface ...$inputs) => array_reduce($inputs, $reduce, $input)->bind($execute);
     }
 
     /**
      * (a -> Input<b>) -> Input<a> -> Input<b>
      *
      * @param callable(mixed $value): InputInterface $f
-     * @return callable(\Quanta\Validation\InputInterface $a): InputInterface
+     * @return callable(\Quanta\Validation\InputInterface $input): InputInterface
      */
     public static function bind(callable $f): callable
     {

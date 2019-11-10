@@ -22,6 +22,6 @@ final class OnKey
     {
         return key_exists($this->key, $data)
             ? new Success($data[$this->key], $this->key)
-            : new Failure(new Error('%%s => %s is required', $this->key));
+            : new Failure(new Error(sprintf('%s is required', $this->key)));
     }
 }

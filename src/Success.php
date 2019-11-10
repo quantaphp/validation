@@ -31,16 +31,22 @@ final class Success implements InputInterface
      */
     public function apply(InputInterface $input): InputInterface
     {
+        if ($input instanceof Success) {
+            if (is_callable($input->value)) {
+                return new self(fn (...$xs) => ($input->value)($this->value, ...$xs));
+            }
+
+            throw new \InvalidArgumentException(
+                sprintf('The given argument must be Quanta\Validation\Success(callable), Quanta\Validation\Success(%s) given', gettype($input->value))
+            );
+        }
+
         if ($input instanceof Failure) {
             return $input;
         }
 
-        if ($input instanceof WrappedCallable) {
-            return $input->curryed($this->value);
-        }
-
         throw new \InvalidArgumentException(
-            sprintf('The given argument must be an instance of Quanta\Validation\WrappedCallable|Quanta\Validation\Failure, %s given', gettype($input))
+            sprintf('The given argument must be an instance of Quanta\Validation\Success|Quanta\Validation\Failure, %s given', gettype($input))
         );
     }
 
@@ -66,12 +72,8 @@ final class Success implements InputInterface
             return $input->nested(...$this->keys)->bind(...$fs);
         }
 
-        if ($input instanceof WrappedCallable) {
-            return $input->bind(...$fs);
-        }
-
         throw new \InvalidArgumentException(
-            sprintf('The given callable must return an instance of Quanta\Validation\Success|Quanta\Validation\WrappedCallable|Quanta\Validation\Failure, %s returned', gettype($input))
+            sprintf('The given callable must return an instance of Quanta\Validation\Success|Quanta\Validation\Failure, %s returned', gettype($input))
         );
     }
 
