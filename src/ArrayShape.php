@@ -2,10 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Quanta\Validation\Rules;
-
-use Quanta\Validation\Input;
-use Quanta\Validation\InputInterface;
+namespace Quanta\Validation;
 
 final class ArrayShape
 {
@@ -19,14 +16,11 @@ final class ArrayShape
     public function __invoke(array $data): InputInterface
     {
         $keys = array_keys($this->shape);
+        $values = array_values($this->shape);
 
         $combine = Input::map(fn (...$xs) => array_combine($keys, $xs));
 
-        $inputs = [];
-
-        foreach ($this->shape as $key => $fs) {
-            $inputs[] = (new OnKey($key))($data)->bind(...$fs);
-        }
+        $inputs = array_map(fn ($k, $fs) => (new ArrayKey($k))($data)->bind(...$fs), $keys, $values);
 
         return $combine(...$inputs);
     }

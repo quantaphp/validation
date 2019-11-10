@@ -14,42 +14,61 @@ final class Input
      */
     public static function unit($value): InputInterface
     {
-        return new Success($value);
+        return new Success(new Value($value));
     }
 
     /**
      * (a -> ... -> b) -> Input<a> -> ... -> Input<b>
      *
      * @param callable $f
-     * @return callable(\Quanta\Validation\InputInterface ...$inputs): \Quanta\Validation\InputInterface
+     * @return \Quanta\Validation\PartialApplications\MappedCallable
      */
-    public static function map(callable $f): callable
+    public static function map(callable $f): PartialApplications\MappedCallable
     {
-        return self::apply(self::unit($f));
+        return new PartialApplications\MappedCallable($f);
     }
 
     /**
      * Input<a -> ... -> b> -> Input<a> -> ... -> Input<b>
      *
      * @param \Quanta\Validation\InputInterface $input
-     * @return callable(\Quanta\Validation\InputInterface ...$inputs): \Quanta\Validation\InputInterface
+     * @return \Quanta\Validation\PartialApplications\AppliedCallable
      */
-    public static function apply(InputInterface $input): callable
+    public static function apply(InputInterface $input): PartialApplications\AppliedCallable
     {
-        $reduce = fn ($f, $x) => $x->apply($f);
-        $execute = fn ($f) => self::unit($f());
-
-        return fn (InputInterface ...$inputs) => array_reduce($inputs, $reduce, $input)->bind($execute);
+        return new PartialApplications\AppliedCallable($input);
     }
 
     /**
-     * (a -> Input<b>) -> Input<a> -> Input<b>
+     * (a -> Input<b>) -> ... -> (b -> Input<c>) -> Input<a> -> Input<c>
      *
-     * @param callable(mixed $value): InputInterface $f
-     * @return callable(\Quanta\Validation\InputInterface $input): InputInterface
+     * @param callable(mixed): InputInterface ...$fs
+     * @return \Quanta\Validation\PartialApplications\BoundCallable
      */
-    public static function bind(callable $f): callable
+    public static function bind(callable ...$fs): PartialApplications\BoundCallable
     {
-        return fn (InputInterface $input) => $input->bind($f);
+        return new PartialApplications\BoundCallable(...$fs);
+    }
+
+    /**
+     * (a -> Input<b>) -> ... -> (b -> Input<c>) -> Array<a> -> Input<Array<c>>
+     *
+     * @param callable(mixed): InputInterface ...$fs
+     * @return \Quanta\Validation\PartialApplications\TraversedCallable
+     */
+    public static function traverseA(...$fs): PartialApplications\TraversedCallable
+    {
+        return new PartialApplications\TraversedCallable(true, ...$fs);
+    }
+
+    /**
+     * (a -> Input<b>) -> ... -> (b -> Input<c>) -> Array<a> -> Input<Array<c>>
+     *
+     * @param callable(mixed): InputInterface ...$fs
+     * @return \Quanta\Validation\PartialApplications\TraversedCallable
+     */
+    public static function traverseM(...$fs): PartialApplications\TraversedCallable
+    {
+        return new PartialApplications\TraversedCallable(false, ...$fs);
     }
 }

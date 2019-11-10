@@ -12,15 +12,15 @@ final class Success implements InputInterface
     private $keys;
 
     /**
-     * @var mixed
+     * @var \Quanta\Validation\ValueInterface
      */
     private $value;
 
     /**
-     * @param mixed     $value
-     * @param string    ...$keys
+     * @param \Quanta\Validation\ValueInterface $value
+     * @param string                            ...$keys
      */
-    public function __construct($value, string ...$keys)
+    public function __construct(ValueInterface $value, string ...$keys)
     {
         $this->keys = $keys;
         $this->value = $value;
@@ -32,12 +32,15 @@ final class Success implements InputInterface
     public function apply(InputInterface $input): InputInterface
     {
         if ($input instanceof Success) {
-            if (is_callable($input->value)) {
-                return new self(fn (...$xs) => ($input->value)($this->value, ...$xs));
+            if ($input->value instanceof CallableValue) {
+                $f = $input->value;
+                $x = $this->value->value();
+
+                return new self(new CallableValue(fn (...$xs) => ($f)($x, ...$xs)));
             }
 
             throw new \InvalidArgumentException(
-                sprintf('The given argument must be Quanta\Validation\Success(callable), Quanta\Validation\Success(%s) given', gettype($input->value))
+                sprintf('The given argument must be Quanta\Validation\Success(CallableValue), Quanta\Validation\Success(%s) given', gettype($input->value))
             );
         }
 
@@ -62,7 +65,7 @@ final class Success implements InputInterface
         /** @var callable */
         $f = array_shift($fs);
 
-        $input = $f($this->value);
+        $input = $f($this->value->value());
 
         if ($input instanceof Success) {
             return (new self($input->value, ...$this->keys, ...$input->keys))->bind(...$fs);
@@ -82,6 +85,6 @@ final class Success implements InputInterface
      */
     public function extract(callable $success, callable $failure)
     {
-        return $success($this->value);
+        return $success($this->value->value());
     }
 }

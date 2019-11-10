@@ -5,11 +5,8 @@ declare(strict_types=1);
 namespace Quanta\Validation\Rules;
 
 use Quanta\Validation\Error;
-use Quanta\Validation\Success;
-use Quanta\Validation\Failure;
-use Quanta\Validation\InputInterface;
 
-final class IsTypedAs
+final class HasType
 {
     const MAP = [
         'bool' => [['boolean'], 'must be a boolean'],
@@ -32,20 +29,24 @@ final class IsTypedAs
         $this->type = $type;
     }
 
-    public function __invoke($value): InputInterface
+    public function __invoke($value): array
     {
         $expected = strtolower($this->type);
 
         if (key_exists($expected, self::MAP)) {
             [$valid, $message] = self::MAP[$expected];
 
-            return in_array(strtolower(gettype($value)), $valid)
-                ? new Success($value)
-                : new Failure(new Error($message));
+            return in_array(strtolower(gettype($value)), $valid) ? [] : [
+                new Error($message, self::class, ['type' => $this->type])
+            ];
         }
 
-        return is_object($value) && $value instanceof $this->type
-            ? new Success($value)
-            : new Failure(new Error('must be an instance of %s', $this->type));
+        return is_object($value) && $value instanceof $this->type ? [] : [
+            new Error(
+                sprintf('must be an instance of %s', $this->type),
+                self::class,
+                ['type' => $this->type],
+            )
+        ];
     }
 }
