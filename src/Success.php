@@ -82,7 +82,7 @@ final class Success implements InputInterface
      */
     public function bindkey(string $key, callable ...$fs): InputInterface
     {
-        return $this->bind(new Nested($key, ...$fs));
+        return $this->bind(fn ($x) => (new Named(...$fs))($key, $x[$key]));
     }
 
     /**

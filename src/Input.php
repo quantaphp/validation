@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace Quanta\Validation;
 
+use Quanta\Validation\PartialApplications\BoundCallable;
+use Quanta\Validation\PartialApplications\MappedCallable;
+use Quanta\Validation\PartialApplications\AppliedCallable;
+use Quanta\Validation\PartialApplications\TraversedCallable;
+
 final class Input
 {
     /**
@@ -23,9 +28,9 @@ final class Input
      * @param callable $f
      * @return \Quanta\Validation\PartialApplications\MappedCallable
      */
-    public static function map(callable $f): PartialApplications\MappedCallable
+    public static function map(callable $f): MappedCallable
     {
-        return new PartialApplications\MappedCallable($f);
+        return new MappedCallable($f);
     }
 
     /**
@@ -34,9 +39,9 @@ final class Input
      * @param \Quanta\Validation\InputInterface $input
      * @return \Quanta\Validation\PartialApplications\AppliedCallable
      */
-    public static function apply(InputInterface $input): PartialApplications\AppliedCallable
+    public static function apply(InputInterface $input): AppliedCallable
     {
-        return new PartialApplications\AppliedCallable($input);
+        return new AppliedCallable($input);
     }
 
     /**
@@ -45,9 +50,9 @@ final class Input
      * @param callable(mixed): InputInterface ...$fs
      * @return \Quanta\Validation\PartialApplications\BoundCallable
      */
-    public static function bind(callable ...$fs): PartialApplications\BoundCallable
+    public static function bind(callable ...$fs): BoundCallable
     {
-        return new PartialApplications\BoundCallable(...$fs);
+        return new BoundCallable(...$fs);
     }
 
     /**
@@ -56,9 +61,9 @@ final class Input
      * @param callable(mixed): InputInterface ...$fs
      * @return \Quanta\Validation\PartialApplications\TraversedCallable
      */
-    public static function traverseA(...$fs): PartialApplications\TraversedCallable
+    public static function traverseA(...$fs): TraversedCallable
     {
-        return new PartialApplications\TraversedCallable(true, ...$fs);
+        return new TraversedCallable(true, new Named(...$fs));
     }
 
     /**
@@ -67,8 +72,8 @@ final class Input
      * @param callable(mixed): InputInterface ...$fs
      * @return \Quanta\Validation\PartialApplications\TraversedCallable
      */
-    public static function traverseM(...$fs): PartialApplications\TraversedCallable
+    public static function traverseM(...$fs): TraversedCallable
     {
-        return new PartialApplications\TraversedCallable(false, ...$fs);
+        return new TraversedCallable(false, new Named(...$fs));
     }
 }

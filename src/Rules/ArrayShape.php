@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Quanta\Validation\Rules;
 
+use Quanta\Validation\Named;
 use Quanta\Validation\Input;
-use Quanta\Validation\Nested;
 use Quanta\Validation\InputInterface;
 
 final class ArrayShape
@@ -19,13 +19,17 @@ final class ArrayShape
 
     public function __invoke(array $data): InputInterface
     {
-        $keys = array_keys($this->shape);
-        $values = array_values($this->shape);
+        $keys = array_keys($data);
+        $values = array_map(fn ($k, $v) => [(string) $k, $v], $keys, $this->shape);
 
-        $combine = Input::map(fn (...$xs) => array_combine($keys, $xs));
+        $map = function (array $tuple) use ($data) {
+            [$key, $fs] = $tuple;
 
-        $inputs = array_map(fn ($k, $fs) => (new HasKey($k))($data)->bind(new Nested($k, ...$fs)), $keys, $values);
+            return (new HasKey($key))($data)->bindkey($key, ...$fs);
+        };
 
-        return $combine(...$inputs);
+        $combine = fn (...$xs) => array_combine($keys, $xs);
+
+        return Input::map($combine)(...array_map($map, $values));
     }
 }
