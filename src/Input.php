@@ -63,7 +63,7 @@ final class Input
      */
     public static function traverseA(...$fs): TraversedCallable
     {
-        return new TraversedCallable(true, new Named(...$fs));
+        return new TraversedCallable(true, fn ($x, string $key) => (new Named($key, ...$fs))($x));
     }
 
     /**
@@ -74,6 +74,6 @@ final class Input
      */
     public static function traverseM(...$fs): TraversedCallable
     {
-        return new TraversedCallable(false, new Named(...$fs));
+        return new TraversedCallable(false, fn ($x, string $key) => (new Named($key, ...$fs))($x));
     }
 }

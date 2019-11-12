@@ -47,7 +47,7 @@ final class TraversedCallable
     {
         [$key, $value] = $tuple;
 
-        $fs = array_map(fn ($f) => fn ($x) => $f($key, $x), $this->fs);
+        $fs = array_map(fn ($f) => fn ($x) => $f($x, $key), $this->fs);
 
         $cons = fn ($x, array $xs) => array_merge($xs, [$key => $x]);
 

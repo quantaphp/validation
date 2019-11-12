@@ -58,14 +58,6 @@ final class Failure implements InputInterface
     /**
      * @inheritdoc
      */
-    public function bindkey(string $key, callable ...$fs): InputInterface
-    {
-        return $this;
-    }
-
-    /**
-     * @inheritdoc
-     */
     public function extract(callable $success, callable $failure)
     {
         return $failure(...$this->errors);
