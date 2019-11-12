@@ -21,19 +21,12 @@ final class Failure implements InputInterface
     }
 
     /**
-     * @param string ...$keys
+     * @param string $key
      * @return \Quanta\Validation\Failure
      */
-    public function nested(string ...$keys): self
+    public function nested(string $key): self
     {
-        if (count($keys) == 0) {
-            return $this;
-        }
-
-        /** @var string */
-        $key = array_pop($keys);
-
-        return (new self(...array_map(fn ($e) => new NestedError($key, $e), $this->errors)))->nested(...$keys);
+        return new self(...array_map(fn ($e) => new NestedError($key, $e), $this->errors));
     }
 
     /**

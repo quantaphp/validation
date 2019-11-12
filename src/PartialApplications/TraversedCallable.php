@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Quanta\Validation\PartialApplications;
 
-use Quanta\Validation\Value;
-use Quanta\Validation\Success;
+use Quanta\Validation\Input;
+use Quanta\Validation\Nested;
 use Quanta\Validation\InputInterface;
 
 final class TraversedCallable
@@ -37,24 +37,23 @@ final class TraversedCallable
     public function __invoke(array $xs): InputInterface
     {
         if (count($xs) == 0) {
-            return new Success(new Value([]));
+            return Input::unit([]);
         }
 
-        $x = reset($xs);
-        $k = key($xs);
+        $key = (string) key($xs);
 
-        unset($xs[$k]);
+        $head = (new Nested($key, ...$this->fs))($xs);
 
-        $head = (new Success(new Value($x), (string) $k))->bind(...$this->fs);
+        unset($xs[$key]);
 
         return $this->acc
-            ? $this->consa((string) $k, $head, $xs)
-            : $this->consm((string) $k, $head, $xs);
+            ? $this->consa($key, $head, $xs)
+            : $this->consm($key, $head, $xs);
     }
 
     private function consa(string $k, InputInterface $head, array $xs): InputInterface
     {
-        $cons = new MappedCallable(fn ($x, array $xs) => array_merge([$k => $x], $xs));
+        $cons = Input::map(fn ($x, array $xs) => array_merge([$k => $x], $xs));
 
         return $cons($head, $this($xs));
     }

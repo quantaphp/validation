@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Quanta\Validation\Rules;
 
 use Quanta\Validation\Input;
+use Quanta\Validation\Nested;
 use Quanta\Validation\InputInterface;
 
 final class ArrayShape
@@ -23,7 +24,7 @@ final class ArrayShape
 
         $combine = Input::map(fn (...$xs) => array_combine($keys, $xs));
 
-        $inputs = array_map(fn ($k, $fs) => (new ArrayKey($k))($data)->bind(...$fs), $keys, $values);
+        $inputs = array_map(fn ($k, $fs) => (new HasKey($k))($data)->bind(new Nested($k, ...$fs)), $keys, $values);
 
         return $combine(...$inputs);
     }

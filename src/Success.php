@@ -7,22 +7,15 @@ namespace Quanta\Validation;
 final class Success implements InputInterface
 {
     /**
-     * @var string[]
-     */
-    private $keys;
-
-    /**
      * @var \Quanta\Validation\ValueInterface
      */
     private $value;
 
     /**
      * @param \Quanta\Validation\ValueInterface $value
-     * @param string                            ...$keys
      */
-    public function __construct(ValueInterface $value, string ...$keys)
+    public function __construct(ValueInterface $value)
     {
-        $this->keys = $keys;
         $this->value = $value;
     }
 
@@ -67,12 +60,8 @@ final class Success implements InputInterface
 
         $input = $f($this->value->value());
 
-        if ($input instanceof Success) {
-            return (new self($input->value, ...$this->keys, ...$input->keys))->bind(...$fs);
-        }
-
-        if ($input instanceof Failure) {
-            return $input->nested(...$this->keys)->bind(...$fs);
+        if ($input instanceof Success || $input instanceof Failure) {
+            return $input->bind(...$fs);
         }
 
         throw new \InvalidArgumentException(
