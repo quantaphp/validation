@@ -2,7 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Quanta\Validation;
+namespace Quanta\Validation\Rules;
+
+use Quanta\Validation\Input;
+use Quanta\Validation\InputInterface;
 
 final class ArrayShape
 {

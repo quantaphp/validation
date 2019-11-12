@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace Quanta\Validation\Rules;
 
+use Quanta\Validation\Input;
 use Quanta\Validation\Error;
+use Quanta\Validation\Failure;
+use Quanta\Validation\InputInterface;
 
 final class HasType
 {
@@ -29,24 +32,27 @@ final class HasType
         $this->type = $type;
     }
 
-    public function __invoke($value): array
+    public function __invoke($value): InputInterface
     {
         $expected = strtolower($this->type);
 
         if (key_exists($expected, self::MAP)) {
             [$valid, $message] = self::MAP[$expected];
 
-            return in_array(strtolower(gettype($value)), $valid) ? [] : [
-                new Error($message, self::class, ['type' => $this->type])
-            ];
+            return in_array(strtolower(gettype($value)), $valid)
+                ? Input::unit($value)
+                : new Failure(new Error($message, self::class, [
+                    'value' => $value,
+                    'type' => $this->type,
+                ]));
         }
 
-        return is_object($value) && $value instanceof $this->type ? [] : [
-            new Error(
+        return is_object($value) && $value instanceof $this->type
+            ? Input::unit($value)
+            : new Failure(new Error(
                 sprintf('must be an instance of %s', $this->type),
                 self::class,
-                ['type' => $this->type],
-            )
-        ];
+                ['value' => $value, 'type' => $this->type],
+            ));
     }
 }

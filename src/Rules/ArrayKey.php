@@ -2,7 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Quanta\Validation;
+namespace Quanta\Validation\Rules;
+
+use Quanta\Validation\Value;
+use Quanta\Validation\Error;
+use Quanta\Validation\Success;
+use Quanta\Validation\Failure;
+use Quanta\Validation\InputInterface;
 
 final class ArrayKey
 {

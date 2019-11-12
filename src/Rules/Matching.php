@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace Quanta\Validation\Rules;
 
+use Quanta\Validation\Input;
 use Quanta\Validation\Error;
+use Quanta\Validation\Failure;
+use Quanta\Validation\InputInterface;
 
 final class Matching
 {
@@ -15,14 +18,14 @@ final class Matching
         $this->pattern = $pattern;
     }
 
-    public function __invoke(string $subject): array
+    public function __invoke(string $value): InputInterface
     {
-        return preg_match($this->pattern, $subject) === 1 ? [] : [
-            new Error(
+        return preg_match($this->pattern, $value) === 1
+            ? Input::unit($value)
+            : new Failure(new Error(
                 sprintf('must match %s', $this->pattern),
                 self::class,
-                ['pattern' => $this->pattern]
-            )
-        ];
+                ['value' => $value, 'pattern' => $this->pattern]
+            ));
     }
 }
