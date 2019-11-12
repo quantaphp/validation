@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Quanta\Validation;
 
-final class CallableValue implements ValueInterface
+final class CallableValue
 {
     /**
      * @var callable
@@ -17,14 +17,6 @@ final class CallableValue implements ValueInterface
     public function __construct($f)
     {
         $this->f = $f;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function value()
-    {
-        return ($this->f)();
     }
 
     /**

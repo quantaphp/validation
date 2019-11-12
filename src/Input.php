@@ -14,7 +14,7 @@ final class Input
      */
     public static function unit($value): InputInterface
     {
-        return new Success(new Value($value));
+        return new Success($value);
     }
 
     /**

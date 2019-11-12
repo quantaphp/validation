@@ -7,16 +7,24 @@ namespace Quanta\Validation;
 final class Success implements InputInterface
 {
     /**
-     * @var \Quanta\Validation\ValueInterface
+     * @var mixed
      */
     private $value;
 
     /**
-     * @param \Quanta\Validation\ValueInterface $value
+     * @param mixed $value
      */
-    public function __construct(ValueInterface $value)
+    public function __construct($value)
     {
         $this->value = $value;
+    }
+
+    /**
+     * @return mixed
+     */
+    private function value()
+    {
+        return $this->value instanceof CallableValue ? ($this->value)() : $this->value;
     }
 
     /**
@@ -27,7 +35,7 @@ final class Success implements InputInterface
         if ($input instanceof Success) {
             if ($input->value instanceof CallableValue) {
                 $f = $input->value;
-                $x = $this->value->value();
+                $x = $this->value();
 
                 return new self(new CallableValue(fn (...$xs) => ($f)($x, ...$xs)));
             }
@@ -58,7 +66,7 @@ final class Success implements InputInterface
         /** @var callable */
         $f = array_shift($fs);
 
-        $input = $f($this->value->value());
+        $input = $f($this->value());
 
         if ($input instanceof Success || $input instanceof Failure) {
             return $input->bind(...$fs);
@@ -82,6 +90,6 @@ final class Success implements InputInterface
      */
     public function extract(callable $success, callable $failure)
     {
-        return $success($this->value->value());
+        return $success($this->value());
     }
 }

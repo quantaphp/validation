@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Quanta\Validation\PartialApplications;
 
-use Quanta\Validation\Success;
+use Quanta\Validation\Input;
 use Quanta\Validation\CallableValue;
 use Quanta\Validation\InputInterface;
 
@@ -29,6 +29,6 @@ final class MappedCallable
      */
     public function __invoke(InputInterface ...$inputs): InputInterface
     {
-        return (new AppliedCallable(new Success(new CallableValue($this->f))))(...$inputs);
+        return (new AppliedCallable(Input::unit(new CallableValue($this->f))))(...$inputs);
     }
 }
