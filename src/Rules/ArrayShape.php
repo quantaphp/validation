@@ -19,7 +19,7 @@ final class ArrayShape
 
     public function __invoke(array $data): InputInterface
     {
-        $keys = array_keys($data);
+        $keys = array_keys($this->shape);
         $values = array_map(fn ($k, $v) => [(string) $k, $v], $keys, $this->shape);
 
         $map = function (array $tuple) use ($data) {
