@@ -32,7 +32,14 @@ final class Named
      */
     public function __invoke($value): InputInterface
     {
-        $input = Input::unit($value)->bind(...$this->fs);
+        if (count($this->fs) == 0) {
+            return Input::unit($value);
+        }
+
+        $f = $this->fs[0];
+        $fs = array_slice($this->fs, 1);
+
+        $input = $f($value)->bind(...$fs);
 
         return $input instanceof Failure
             ? $input->nested($this->key)
