@@ -9,7 +9,7 @@ use Quanta\Validation\Error;
 use Quanta\Validation\Failure;
 use Quanta\Validation\InputInterface;
 
-final class NotEmpty
+final class IsNotEmpty
 {
     public function __invoke(string $value): InputInterface
     {

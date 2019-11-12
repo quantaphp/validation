@@ -9,7 +9,7 @@ use Quanta\Validation\Error;
 use Quanta\Validation\Failure;
 use Quanta\Validation\InputInterface;
 
-final class LessThan
+final class IsLessThan
 {
     private $threshold;
 
