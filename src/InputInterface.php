@@ -23,6 +23,15 @@ interface InputInterface
     public function bind(callable ...$fs): InputInterface;
 
     /**
+     * Call the given wrapping callable with the given key of the wrapped array.
+     *
+     * @param string                                                $key
+     * @param callable(mixed): \Quanta\Validation\InputInterface    ...$fs
+     * @return \Quanta\Validation\InputInterface
+     */
+    public function bindkey(string $key, callable ...$fs): InputInterface;
+
+    /**
      * Apply the given success callable on successful value or the failure callable on errors.
      *
      * @param callable(mixed): mixed                                            $success

@@ -72,6 +72,14 @@ final class Success implements InputInterface
     /**
      * @inheritdoc
      */
+    public function bindkey(string $key, callable ...$fs): InputInterface
+    {
+        return $this->bind(new Nested($key, ...$fs));
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function extract(callable $success, callable $failure)
     {
         return $success($this->value->value());
