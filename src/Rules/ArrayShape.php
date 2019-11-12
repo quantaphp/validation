@@ -20,16 +20,9 @@ final class ArrayShape
     public function __invoke(array $data): InputInterface
     {
         $keys = array_keys($this->shape);
-        $values = array_map(fn ($k, $v) => [(string) $k, $v], $keys, $this->shape);
-
-        $map = function (array $tuple) use ($data) {
-            [$key, $fs] = $tuple;
-
-            return (new HasKey($key))($data)->bindkey($key, ...$fs);
-        };
-
+        $map = fn (string $key, array $fs) => (new HasKey($key))($data)->bindkey($key, ...$fs);
         $combine = fn (...$xs) => array_combine($keys, $xs);
 
-        return Input::map($combine)(...array_map($map, $values));
+        return Input::map($combine)(...array_map($map, $keys, $this->shape));
     }
 }
