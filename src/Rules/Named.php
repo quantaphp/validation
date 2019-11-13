@@ -31,19 +31,14 @@ final class Named
     }
 
     /**
-     * @param mixed $value
+     * @param mixed $x
      * @return \Quanta\Validation\InputInterface
      */
-    public function __invoke($value): InputInterface
+    public function __invoke($x): InputInterface
     {
-        if (count($this->fs) == 0) {
-            return Input::unit($value);
-        }
+        $f = new Combined(...$this->fs);
 
-        $f = $this->fs[0];
-        $fs = array_slice($this->fs, 1);
-
-        $input = $f($value)->bind(...$fs);
+        $input = $f($x);
 
         return $input instanceof Failure
             ? $input->nested($this->key)
