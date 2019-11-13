@@ -9,19 +9,25 @@ use Quanta\Validation\InputInterface;
 
 final class ArrayShape
 {
-    private $shape;
+    /**
+     * @var array<string, callable(mixed): \Quanta\Validation\InputInterface>
+     */
+    private $fs;
 
-    public function __construct(array $shape)
+    /**
+     * @param array<string, callable(mixed): \Quanta\Validation\InputInterface> $fs
+     */
+    public function __construct(array $fs)
     {
-        $this->shape = $shape;
+        $this->fs = $fs;
     }
 
-    public function __invoke(array $data): InputInterface
+    public function __invoke(array $x): InputInterface
     {
-        $keys = array_keys($this->shape);
-        $map = fn (string $key, array $fs) => (new HasKey($key))($data)->bind(fn ($x) => (new Named($key, ...$fs))($x[$key]));
+        $keys = array_keys($this->fs);
+        $map = fn (string $key, array $fs) => (new ArrayKey($key, ...$fs))($x);
         $combine = fn (...$xs) => array_combine($keys, $xs);
 
-        return Input::map($combine)(...array_map($map, $keys, $this->shape));
+        return Input::map($combine)(...array_map($map, $keys, $this->fs));
     }
 }
