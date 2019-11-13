@@ -48,7 +48,7 @@ final class TraversedCallable
 
         $fs = array_map(fn ($f) => fn ($x) => $f($x, $key), $this->fs);
 
-        $cons = fn ($x, array $xs) => array_merge($xs, [$key => $x]);
+        $cons = fn (array $xs, $x) => array_merge($xs, [$key => $x]);
 
         $head = Input::unit($value)->bind(...$fs);
 
@@ -59,11 +59,11 @@ final class TraversedCallable
 
     private function consa(InputInterface $head, InputInterface $tail, callable $cons): InputInterface
     {
-        return Input::map($cons)($head, $tail);
+        return Input::map($cons)($tail, $head);
     }
 
     private function consm(InputInterface $head, InputInterface $tail, callable $cons): InputInterface
     {
-        return $head->bind(fn ($x) => $tail->bind(fn ($xs) => $cons($x, $xs)));
+        return $head->bind(fn ($x) => $tail->bind(fn ($xs) => $cons($xs, $x)));
     }
 }
