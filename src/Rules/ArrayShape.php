@@ -10,12 +10,12 @@ use Quanta\Validation\InputInterface;
 final class ArrayShape
 {
     /**
-     * @var array<string, callable(mixed): \Quanta\Validation\InputInterface>
+     * @var array<string, array<int, callable(mixed): \Quanta\Validation\InputInterface>>
      */
     private $fs;
 
     /**
-     * @param array<string, callable(mixed): \Quanta\Validation\InputInterface> $fs
+     * @param array<string, array<int, callable(mixed): \Quanta\Validation\InputInterface>> $fs
      */
     public function __construct(array $fs)
     {
