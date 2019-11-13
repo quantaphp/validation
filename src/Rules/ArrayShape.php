@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Quanta\Validation\Rules;
 
-use Quanta\Validation\Named;
 use Quanta\Validation\Input;
 use Quanta\Validation\InputInterface;
 

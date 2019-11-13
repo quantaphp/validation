@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Quanta\Validation;
 
+use Quanta\Validation\Rules\Named;
 use Quanta\Validation\PartialApplications\BoundCallable;
 use Quanta\Validation\PartialApplications\MappedCallable;
 use Quanta\Validation\PartialApplications\AppliedCallable;

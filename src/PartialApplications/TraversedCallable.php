@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Quanta\Validation\PartialApplications;
 
-use Quanta\Validation\Named;
 use Quanta\Validation\Input;
 use Quanta\Validation\InputInterface;
 
