@@ -15,13 +15,13 @@ final class TraversedCallable
     private $acc;
 
     /**
-     * @var array<int, callable(string, mixed): InputInterface> $fs
+     * @var array<int, callable(mixed, string): InputInterface> $fs
      */
     private $fs;
 
     /**
-     * @param bool                                      $acc
-     * @param callable(string, mixed): InputInterface   ...$fs
+     * @param bool                                                          $acc
+     * @param callable(mixed, string): \Quanta\Validation\InputInterface    ...$fs
      */
     public function __construct(bool $acc, callable ...$fs)
     {

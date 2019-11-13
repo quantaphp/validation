@@ -48,7 +48,7 @@ final class Input
     /**
      * (a -> Input<b>) -> ... -> (b -> Input<c>) -> Input<a> -> Input<c>
      *
-     * @param callable(mixed): InputInterface ...$fs
+     * @param callable(mixed): \Quanta\Validation\InputInterface ...$fs
      * @return \Quanta\Validation\PartialApplications\BoundCallable
      */
     public static function bind(callable ...$fs): BoundCallable
@@ -59,7 +59,7 @@ final class Input
     /**
      * (a -> Input<b>) -> ... -> (b -> Input<c>) -> Array<a> -> Input<Array<c>>
      *
-     * @param callable(mixed): InputInterface ...$fs
+     * @param callable(mixed): \Quanta\Validation\InputInterface ...$fs
      * @return \Quanta\Validation\PartialApplications\TraversedCallable
      */
     public static function traverseA(...$fs): TraversedCallable
@@ -70,7 +70,7 @@ final class Input
     /**
      * (a -> Input<b>) -> ... -> (b -> Input<c>) -> Array<a> -> Input<Array<c>>
      *
-     * @param callable(mixed): InputInterface ...$fs
+     * @param callable(mixed): \Quanta\Validation\InputInterface ...$fs
      * @return \Quanta\Validation\PartialApplications\TraversedCallable
      */
     public static function traverseM(...$fs): TraversedCallable

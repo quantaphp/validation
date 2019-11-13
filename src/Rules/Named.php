@@ -16,13 +16,13 @@ final class Named
     private $key;
 
     /**
-     * @var array<int, callable(mixed): InputInterface> $fs
+     * @var array<int, callable(mixed): \Quanta\Validation\InputInterface> $fs
      */
     private $fs;
 
     /**
-     * @param string                            $key
-     * @param callable(mixed): InputInterface   ...$fs
+     * @param string                                                $key
+     * @param callable(mixed): \Quanta\Validation\InputInterface    ...$fs
      */
     public function __construct(string $key, callable ...$fs)
     {

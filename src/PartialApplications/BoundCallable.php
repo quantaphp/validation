@@ -14,7 +14,7 @@ final class BoundCallable
     private $fs;
 
     /**
-     * @param callable(mixed): InputInterface ...$fs
+     * @param callable(mixed): \Quanta\Validation\InputInterface ...$fs
      */
     public function __construct(callable ...$fs)
     {
