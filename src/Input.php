@@ -23,7 +23,7 @@ final class Input
      * Can't call it with inputs because return value would be callable|InputInterface
      *
      * @param callable $f
-     * @return callable(array<int, \Quanta\Validation\InputInterface>): \Quanta\Validation\InputInterface
+     * @return callable
      */
     public static function map(callable $f): callable
     {
@@ -36,7 +36,7 @@ final class Input
      * Can't call it with inputs because return value would be callable|InputInterface
      *
      * @param \Quanta\Validation\InputInterface $input
-     * @return callable(array<int, \Quanta\Validation\InputInterface>): \Quanta\Validation\InputInterface
+     * @return callable
      */
     public static function apply(InputInterface $input): callable
     {
