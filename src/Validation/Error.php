@@ -16,7 +16,7 @@ final class Error
 
     public function __construct(string $name, string $message, string $label = '', array $params = [])
     {
-        $his->name = $name;
+        $this->name = $name;
         $this->message = $message;
         $this->label = $label;
         $this->params = $params;

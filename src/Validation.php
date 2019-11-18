@@ -27,7 +27,7 @@ final class Validation implements ValidationInterface
         if (key_exists($this->key, $xs)) {
             $x = $xs[$this->key];
 
-            return count($errors = ($this->rule)($name, $x)) > 0
+            return count($errors = ($this->rule)($name, $x)) == 0
                 ? new Success($name . '[' . $this->key . ']', [$this->key => $x])
                 : new Failure(...$errors);
         }
