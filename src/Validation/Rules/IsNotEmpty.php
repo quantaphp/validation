@@ -9,10 +9,10 @@ use Quanta\Validation\RuleInterface;
 
 final class IsNotEmpty implements RuleInterface
 {
-    public function __invoke(string $name, $x): array
+    public function __invoke($x): array
     {
         return strlen(trim($x)) > 0 ? [] : [
-            new Error($name, 'must not be empty', self::class)
+            new Error('must not be empty', self::class)
         ];
     }
 }

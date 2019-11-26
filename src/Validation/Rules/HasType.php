@@ -7,7 +7,7 @@ namespace Quanta\Validation\Rules;
 use Quanta\Validation\Error;
 use Quanta\Validation\RuleInterface;
 
-final class HasType
+final class HasType implements RuleInterface
 {
     const MAP = [
         'bool' => [['boolean'], 'must be a boolean'],
@@ -30,7 +30,7 @@ final class HasType
         $this->type = $type;
     }
 
-    public function __invoke(string $name, $x): array
+    public function __invoke($x): array
     {
         $expected = strtolower($this->type);
 
@@ -38,7 +38,7 @@ final class HasType
             [$valid, $message] = self::MAP[$expected];
 
             return in_array(strtolower(gettype($x)), $valid) ? [] : [
-                new Error($name, $message, self::class, [
+                new Error($message, self::class, [
                     'value' => $x,
                     'type' => $this->type,
                 ]),
@@ -47,7 +47,6 @@ final class HasType
 
         return is_object($x) && $x instanceof $this->type ? [] : [
             new Error(
-                $name,
                 sprintf('must be an instance of %s', $this->type),
                 self::class,
                 ['value' => $x, 'type' => $this->type],

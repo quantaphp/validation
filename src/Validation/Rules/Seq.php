@@ -21,10 +21,10 @@ final class Seq implements RuleInterface
     /**
      * @inheritdoc
      */
-    public function __invoke(string $name, $x): array
+    public function __invoke($x): array
     {
         foreach ($this->rules as $rule) {
-            if (count($errors = $rule($name, $x)) > 0) {
+            if (count($errors = $rule($x)) > 0) {
                 return $errors;
             }
         }

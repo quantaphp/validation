@@ -11,8 +11,6 @@ final class Rule implements RuleInterface
      */
     private $predicate;
 
-    private string $name;
-
     private string $message;
 
     private string $label;
@@ -27,10 +25,10 @@ final class Rule implements RuleInterface
         $this->params = $params;
     }
 
-    public function __invoke(string $name, $x): array
+    public function __invoke($x): array
     {
         return ($this->predicate)($x) ? [] : [
-            new Error($name, $this->message, $this->label, $this->params)
+            new Error($this->message, $this->label, $this->params)
         ];
     }
 }

@@ -6,8 +6,8 @@ namespace Quanta\Validation;
 
 final class Input
 {
-    public static function unit(string $name, $x): InputInterface
+    public static function unit(array $xs): InputInterface
     {
-        return new Success($name, $x);
+        return new Success($xs);
     }
 }

@@ -7,7 +7,7 @@ namespace Quanta\Validation\Rules;
 use Quanta\Validation\Error;
 use Quanta\Validation\RuleInterface;
 
-final class IsLessThan
+final class IsLessThan implements RuleInterface
 {
     private $threshold;
 
@@ -16,12 +16,11 @@ final class IsLessThan
         $this->threshold = $threshold;
     }
 
-    public function __invoke(string $name, $x): array
+    public function __invoke($x): array
     {
         if (is_int($x) || is_float($x)) {
             return $x <= $this->threshold ? [] : [
                 new Error(
-                    $name,
                     sprintf('must be less than or equal to %s', $this->threshold),
                     self::class,
                     ['value' => $x, 'threshold' => $this->threshold],
@@ -32,7 +31,6 @@ final class IsLessThan
         if (is_countable($x)) {
             return count($x) <= $this->threshold ? [] : [
                 new Error(
-                    $name,
                     sprintf('must contain at most %s %s', $this->threshold, $this->threshold > 1 ? 'values' : 'value'),
                     self::class,
                     ['value' => $x, 'threshold' => $this->threshold],
@@ -43,7 +41,6 @@ final class IsLessThan
         if (is_string($x)) {
             return strlen($x) <= $this->threshold ? [] : [
                 new Error(
-                    $name,
                     sprintf('must contain at most %s %s', $this->threshold, $this->threshold > 1 ? 'characters' : 'character'),
                     self::class,
                     ['value' => $x, 'threshold' => $this->threshold],

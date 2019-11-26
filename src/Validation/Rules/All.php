@@ -21,12 +21,12 @@ final class All implements RuleInterface
     /**
      * @inheritdoc
      */
-    public function __invoke(string $name, $x): array
+    public function __invoke($x): array
     {
         $errors = [];
 
         foreach ($this->rules as $rule) {
-            $errors = [...$errors, ...$rule($name, $x)];
+            $errors = [...$errors, ...$rule($x)];
         }
 
         return $errors;

@@ -7,7 +7,7 @@ namespace Quanta\Validation\Rules;
 use Quanta\Validation\Error;
 use Quanta\Validation\RuleInterface;
 
-final class IsMatching
+final class IsMatching implements RuleInterface
 {
     private $pattern;
 
@@ -16,11 +16,10 @@ final class IsMatching
         $this->pattern = $pattern;
     }
 
-    public function __invoke(string $name, $x): array
+    public function __invoke($x): array
     {
         return preg_match($this->pattern, $x) === 1 ? [] : [
             new Error(
-                $name,
                 sprintf('must match %s', $this->pattern),
                 self::class,
                 ['value' => $x, 'pattern' => $this->pattern]

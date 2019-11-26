@@ -9,5 +9,5 @@ interface RuleInterface
     /**
      * @return \Quanta\Validation\Error[]
      */
-    public function __invoke(string $name, $x): array;
+    public function __invoke($x): array;
 }
