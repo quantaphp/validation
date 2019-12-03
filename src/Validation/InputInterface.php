@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Quanta\Validation;
 
-use Quanta\ValidationInterface;
-
 interface InputInterface
 {
     /**
@@ -21,7 +19,7 @@ interface InputInterface
     public function merge(InputInterface ...$inputs): InputInterface;
 
     /**
-     * @param callable(array): \Quanta\Validation\InputInterface ...$fs
+     * @param callable(array): (\Quanta\Validation\Success|\Quanta\Validation\Failure) ...$fs
      * @return \Quanta\Validation\InputInterface
      */
     public function bind(callable ...$fs): InputInterface;

@@ -4,12 +4,22 @@ declare(strict_types=1);
 
 namespace Quanta\Validation;
 
-final class NamedError implements ErrorInterface
+final class NestedError implements ErrorInterface
 {
+    /**
+     * @var string
+     */
     private string $key;
 
+    /**
+     * @var \Quanta\Validation\ErrorInterface
+     */
     private ErrorInterface $error;
 
+    /**
+     * @param string                            $key
+     * @param \Quanta\Validation\ErrorInterface $error
+     */
     public function __construct(string $key, ErrorInterface $error)
     {
         $this->key = $key;

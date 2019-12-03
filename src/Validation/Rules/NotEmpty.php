@@ -7,12 +7,15 @@ namespace Quanta\Validation\Rules;
 use Quanta\Validation\Error;
 use Quanta\Validation\RuleInterface;
 
-final class IsNotEmpty implements RuleInterface
+final class NotEmpty implements RuleInterface
 {
-    public function __invoke($x): array
+    /**
+     * @inheritdoc
+     */
+    public function __invoke(string $name, $x): array
     {
         return strlen(trim($x)) > 0 ? [] : [
-            new Error('must not be empty', self::class)
+            new Error($name, 'must not be empty', self::class)
         ];
     }
 }

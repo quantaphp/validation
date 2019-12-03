@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Quanta\Validation;
 
-use Quanta\ValidationInterface;
-
 final class Success implements InputInterface
 {
     /**
@@ -114,7 +112,7 @@ final class Success implements InputInterface
      */
     private function prepend(array $xs, string ...$keys): array
     {
-        $key = array_shift($keys) ?? false;
+        $key = array_pop($keys) ?? false;
 
         return $key === false ? $xs : $this->prepend([$key => $xs], ...$keys);
     }

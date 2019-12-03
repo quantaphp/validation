@@ -7,21 +7,31 @@ namespace Quanta\Validation\Rules;
 use Quanta\Validation\Error;
 use Quanta\Validation\RuleInterface;
 
-final class IsGreaterThan implements RuleInterface
+final class LessThan implements RuleInterface
 {
-    private $threshold;
+    /**
+     * @var int
+     */
+    private int $threshold;
 
+    /**
+     * @param int $threshold
+     */
     public function __construct(int $threshold)
     {
         $this->threshold = $threshold;
     }
 
-    public function __invoke($x): array
+    /**
+     * @inheritdoc
+     */
+    public function __invoke(string $name, $x): array
     {
         if (is_int($x) || is_float($x)) {
-            return $x >= $this->threshold ? [] : [
+            return $x <= $this->threshold ? [] : [
                 new Error(
-                    sprintf('must be greater than or equal to %s', $this->threshold),
+                    $name,
+                    sprintf('must be less than or equal to %s', $this->threshold),
                     self::class,
                     ['value' => $x, 'threshold' => $this->threshold],
                 ),
@@ -29,9 +39,10 @@ final class IsGreaterThan implements RuleInterface
         }
 
         if (is_countable($x)) {
-            return count($x) >= $this->threshold ? [] : [
+            return count($x) <= $this->threshold ? [] : [
                 new Error(
-                    sprintf('must contain at least %s %s', $this->threshold, $this->threshold > 1 ? 'values' : 'value'),
+                    $name,
+                    sprintf('must contain at most %s %s', $this->threshold, $this->threshold > 1 ? 'values' : 'value'),
                     self::class,
                     ['value' => $x, 'threshold' => $this->threshold],
                 ),
@@ -39,9 +50,10 @@ final class IsGreaterThan implements RuleInterface
         }
 
         if (is_string($x)) {
-            return strlen($x) >= $this->threshold ? [] : [
+            return strlen($x) <= $this->threshold ? [] : [
                 new Error(
-                    sprintf('must contain at least %s %s', $this->threshold, $this->threshold > 1 ? 'characters' : 'character'),
+                    $name,
+                    sprintf('must contain at most %s %s', $this->threshold, $this->threshold > 1 ? 'characters' : 'character'),
                     self::class,
                     ['value' => $x, 'threshold' => $this->threshold],
                 ),

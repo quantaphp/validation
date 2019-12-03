@@ -6,14 +6,35 @@ namespace Quanta\Validation;
 
 final class Error implements ErrorInterface
 {
+    /**
+     * @var string
+     */
+    private string $name;
+
+    /**
+     * @var string
+     */
     private string $message;
 
+    /**
+     * @var string
+     */
     private string $label;
 
+    /**
+     * @var array
+     */
     private array $params;
 
-    public function __construct(string $message, string $label = '', array $params = [])
+    /**
+     * @param string    $name
+     * @param string    $message
+     * @param string    $label
+     * @param array     $params
+     */
+    public function __construct(string $name, string $message, string $label = '', array $params = [])
     {
+        $this->name = $name;
         $this->message = $message;
         $this->label = $label;
         $this->params = $params;
@@ -24,7 +45,7 @@ final class Error implements ErrorInterface
      */
     public function name(): string
     {
-        return '';
+        return '[' . $this->name . ']';
     }
 
     /**

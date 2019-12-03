@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Quanta\Validation;
 
-use Quanta\ValidationInterface;
-
 final class Failure implements InputInterface
 {
     /**
@@ -20,23 +18,6 @@ final class Failure implements InputInterface
     public function __construct(ErrorInterface $error, ErrorInterface ...$errors)
     {
         $this->errors = [$error, ...$errors];
-    }
-
-    /**
-     * @param string ...$keys
-     * @return \Quanta\Validation\Failure
-     */
-    public function nested(string ...$keys): self
-    {
-        $key = array_shift($keys) ?? false;
-
-        if ($key === false) {
-            return $this;
-        }
-
-        $errors = array_map(fn (ErrorInterface $error) => new NamedError($key, $error), $this->errors);
-
-        return (new self(...$errors))->nested(...$keys);
     }
 
     /**
@@ -85,5 +66,22 @@ final class Failure implements InputInterface
     public function extract(callable $success, callable $failure)
     {
         return $failure(...$this->errors);
+    }
+
+    /**
+     * @param string ...$keys
+     * @return \Quanta\Validation\Failure
+     */
+    public function nested(string ...$keys): self
+    {
+        $key = array_shift($keys) ?? false;
+
+        if ($key === false) {
+            return $this;
+        }
+
+        $errors = array_map(fn ($error) => new NestedError($key, $error), $this->errors);
+
+        return (new self(...$errors))->nested(...$keys);
     }
 }

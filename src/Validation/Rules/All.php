@@ -13,6 +13,9 @@ final class All implements RuleInterface
      */
     private array $rules;
 
+    /**
+     * @param \Quanta\Validation\RuleInterface ...$rules
+     */
     public function __construct(RuleInterface ...$rules)
     {
         $this->rules = $rules;
@@ -21,12 +24,12 @@ final class All implements RuleInterface
     /**
      * @inheritdoc
      */
-    public function __invoke($x): array
+    public function __invoke(string $name, $x): array
     {
         $errors = [];
 
         foreach ($this->rules as $rule) {
-            $errors = [...$errors, ...$rule($x)];
+            $errors = [...$errors, ...$rule($name, $x)];
         }
 
         return $errors;

@@ -11,12 +11,27 @@ final class Rule implements RuleInterface
      */
     private $predicate;
 
+    /**
+     * @var string
+     */
     private string $message;
 
+    /**
+     * @var string
+     */
     private string $label;
 
+    /**
+     * @var array
+     */
     private array $params;
 
+    /**
+     * @param callable(mixed): bool $predicate
+     * @param string                $message
+     * @param string                $label
+     * @param array                 $params
+     */
     public function __construct(callable $predicate, string $message, string $label = '', array $params = [])
     {
         $this->predicate = $predicate;
@@ -25,10 +40,13 @@ final class Rule implements RuleInterface
         $this->params = $params;
     }
 
-    public function __invoke($x): array
+    /**
+     * @inheritdoc
+     */
+    public function __invoke(string $name, $x): array
     {
         return ($this->predicate)($x) ? [] : [
-            new Error($this->message, $this->label, $this->params)
+            new Error($name, $this->message, $this->label, $this->params)
         ];
     }
 }
