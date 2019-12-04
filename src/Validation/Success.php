@@ -12,18 +12,11 @@ final class Success implements InputInterface
     private array $xs;
 
     /**
-     * @var string[]
+     * @param array $xs
      */
-    private array $keys;
-
-    /**
-     * @param array     $xs
-     * @param string    ...$keys
-     */
-    public function __construct(array $xs, string ...$keys)
+    public function __construct(array $xs)
     {
         $this->xs = $xs;
-        $this->keys = $keys;
     }
 
     /**
@@ -33,7 +26,7 @@ final class Success implements InputInterface
     {
         $f = array_shift($fs) ?? false;
 
-        return $f === false ? $this : (new Success($f($this->xs), ...$this->keys))->map(...$fs);
+        return $f === false ? $this : (new self($f($this->xs)))->map(...$fs);
     }
 
     /**
@@ -48,14 +41,11 @@ final class Success implements InputInterface
         }
 
         if ($input instanceof Success) {
-            $xs1 = $this->namespaced();
-            $xs2 = $input->namespaced();
-
-            return (new Success(array_merge($xs1, $xs2)))->merge(...$inputs);
+            return (new self(array_merge($this->xs, $input->xs)))->merge(...$inputs);
         }
 
         if ($input instanceof Failure) {
-            return $input;
+            return $input->merge(...$inputs);
         }
 
         throw new \InvalidArgumentException(
@@ -77,11 +67,11 @@ final class Success implements InputInterface
         $input = $f($this->xs);
 
         if ($input instanceof Success) {
-            return (new Success($input->xs, ...$this->keys, ...$input->keys))->bind(...$fs);
+            return (new self($input->xs))->bind(...$fs);
         }
 
         if ($input instanceof Failure) {
-            return $input->nested(...$this->keys);
+            return $input->bind(...$fs);
         }
 
         throw new \InvalidArgumentException(
@@ -94,26 +84,6 @@ final class Success implements InputInterface
      */
     public function extract(callable $success, callable $failure)
     {
-        return $success($this->namespaced());
-    }
-
-    /**
-     * @return array
-     */
-    private function namespaced(): array
-    {
-        return $this->prepend($this->xs, ...$this->keys);
-    }
-
-    /**
-     * @param array     $xs
-     * @param string    ...$keys
-     * @return array
-     */
-    private function prepend(array $xs, string ...$keys): array
-    {
-        $key = array_pop($keys) ?? false;
-
-        return $key === false ? $xs : $this->prepend([$key => $xs], ...$keys);
+        return $success($this->xs);
     }
 }
