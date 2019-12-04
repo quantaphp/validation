@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Quanta\Validation;
 
-final class Rule implements RuleInterface
+final class Rule
 {
     /**
      * @var callable(mixed): bool
@@ -41,12 +41,13 @@ final class Rule implements RuleInterface
     }
 
     /**
-     * @inheritdoc
+     * @param mixed $x
+     * @return \Quanta\Validation\Error[]
      */
-    public function __invoke(string $name, $x): array
+    public function __invoke($x): array
     {
         return ($this->predicate)($x) ? [] : [
-            new Error($name, $this->message, $this->label, $this->params)
+            new Error($this->message, $this->label, $this->params)
         ];
     }
 }

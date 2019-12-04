@@ -5,9 +5,8 @@ declare(strict_types=1);
 namespace Quanta\Validation\Rules;
 
 use Quanta\Validation\Error;
-use Quanta\Validation\RuleInterface;
 
-final class Matching implements RuleInterface
+final class Matching
 {
     /**
      * @var string
@@ -23,12 +22,13 @@ final class Matching implements RuleInterface
     }
 
     /**
-     * @inheritdoc
+     * @param string $x
+     * @return \Quanta\Validation\Error[]
      */
-    public function __invoke(string $name, $x): array
+    public function __invoke(string $x): array
     {
         return preg_match($this->pattern, $x) === 1 ? [] : [
-            new Error($name, sprintf('must match %s', $this->pattern), self::class, [
+            new Error(sprintf('must match %s', $this->pattern), self::class, [
                 'value' => $x, 'pattern' => $this->pattern,
             ]),
         ];
