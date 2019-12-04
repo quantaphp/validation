@@ -4,59 +4,35 @@ declare(strict_types=1);
 
 namespace Quanta\Validation;
 
-final class Success implements InputInterface
+final class Success implements ResultInterface
 {
     /**
-     * @var array
+     * @var mixed
      */
-    private array $xs;
+    private $x;
 
     /**
-     * @param array $xs
+     * @param mixed $x
      */
-    public function __construct(array $xs)
+    public function __construct($x)
     {
-        $this->xs = $xs;
+        $this->x = $x;
     }
 
     /**
      * @inheritdoc
      */
-    public function map(callable ...$fs): InputInterface
+    public function map(callable ...$fs): ResultInterface
     {
         $f = array_shift($fs) ?? false;
 
-        return $f === false ? $this : (new self($f($this->xs)))->map(...$fs);
+        return $f === false ? $this : (new self($f($this->x)))->map(...$fs);
     }
 
     /**
      * @inheritdoc
      */
-    public function merge(InputInterface ...$inputs): InputInterface
-    {
-        $input = array_shift($inputs) ?? false;
-
-        if ($input == false) {
-            return $this;
-        }
-
-        if ($input instanceof Success) {
-            return (new self(array_merge($this->xs, $input->xs)))->merge(...$inputs);
-        }
-
-        if ($input instanceof Failure) {
-            return $input->merge(...$inputs);
-        }
-
-        throw new \InvalidArgumentException(
-            sprintf('The given input must be an instance of Quanta\Validation\Success|Quanta\Validation\Failure, %s given', gettype($input))
-        );
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function bind(callable ...$fs): InputInterface
+    public function bind(callable ...$fs): ResultInterface
     {
         $f = array_shift($fs) ?? false;
 
@@ -64,18 +40,18 @@ final class Success implements InputInterface
             return $this;
         }
 
-        $input = $f($this->xs);
+        $result = $f($this->x);
 
-        if ($input instanceof Success) {
-            return (new self($input->xs))->bind(...$fs);
+        if ($result instanceof Success) {
+            return (new self($result->x))->bind(...$fs);
         }
 
-        if ($input instanceof Failure) {
-            return $input->bind(...$fs);
+        if ($result instanceof Failure) {
+            return $result->bind(...$fs);
         }
 
         throw new \InvalidArgumentException(
-            sprintf('The given validation must return an instance of Quanta\Validation\Success|Quanta\Validation\Failure, %s returned', gettype($input))
+            sprintf('The given validation must return an instance of Quanta\Validation\Success|Quanta\Validation\Failure, %s returned', gettype($result))
         );
     }
 
@@ -84,6 +60,6 @@ final class Success implements InputInterface
      */
     public function extract(callable $success, callable $failure)
     {
-        return $success($this->xs);
+        return $success($this->x);
     }
 }

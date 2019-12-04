@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Quanta\Validation;
 
-final class Failure implements InputInterface
+final class Failure implements ResultInterface, InputInterface
 {
     /**
      * @var \Quanta\Validation\ErrorInterface[]
@@ -23,7 +23,15 @@ final class Failure implements InputInterface
     /**
      * @inheritdoc
      */
-    public function map(callable ...$fs): InputInterface
+    public function map(callable ...$fs): ResultInterface
+    {
+        return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function bind(callable ...$fs): ResultInterface
     {
         return $this;
     }
@@ -39,7 +47,7 @@ final class Failure implements InputInterface
             return $this;
         }
 
-        if ($input instanceof Success) {
+        if ($input instanceof Input) {
             return $this->merge(...$inputs);
         }
 
@@ -48,16 +56,8 @@ final class Failure implements InputInterface
         }
 
         throw new \InvalidArgumentException(
-            sprintf('The given input must be an instance of Quanta\Validation\Success|Quanta\Validation\Failure, %s given', gettype($input))
+            sprintf('The given input must be an instance of Quanta\Validation\Input|Quanta\Validation\Failure, %s given', gettype($input))
         );
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function bind(callable ...$fs): InputInterface
-    {
-        return $this;
     }
 
     /**
@@ -66,22 +66,5 @@ final class Failure implements InputInterface
     public function extract(callable $success, callable $failure)
     {
         return $failure(...$this->errors);
-    }
-
-    /**
-     * @param string ...$keys
-     * @return \Quanta\Validation\Failure
-     */
-    public function nested(string ...$keys): self
-    {
-        $key = array_shift($keys) ?? false;
-
-        if ($key === false) {
-            return $this;
-        }
-
-        $errors = array_map(fn ($error) => new NestedError($key, $error), $this->errors);
-
-        return (new self(...$errors))->nested(...$keys);
     }
 }

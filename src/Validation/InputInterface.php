@@ -7,22 +7,10 @@ namespace Quanta\Validation;
 interface InputInterface
 {
     /**
-     * @param callable ...$fs
-     * @return \Quanta\Validation\InputInterface
-     */
-    public function map(callable ...$fs): InputInterface;
-
-    /**
      * @param \Quanta\Validation\InputInterface ...$inputs
      * @return \Quanta\Validation\InputInterface
      */
     public function merge(InputInterface ...$inputs): InputInterface;
-
-    /**
-     * @param callable(array): (\Quanta\Validation\Success|\Quanta\Validation\Failure) ...$fs
-     * @return \Quanta\Validation\InputInterface
-     */
-    public function bind(callable ...$fs): InputInterface;
 
     /**
      * @param callable(array): mixed                                        $success

@@ -7,12 +7,12 @@ namespace Quanta\Validation;
 final class Combined
 {
     /**
-     * @var Array<int, callable(array): (\Quanta\Validation\Success|\Quanta\Validation\Failure)>
+     * @var Array<int, callable(mixed): (\Quanta\Validation\Success|\Quanta\Validation\Failure)>
      */
     private array $fs;
 
     /**
-     * @param callable(array): (\Quanta\Validation\Success|\Quanta\Validation\Failure) ...$fs
+     * @param callable(mixed): (\Quanta\Validation\Success|\Quanta\Validation\Failure) ...$fs
      */
     public function __construct(callable ...$fs)
     {
@@ -22,12 +22,12 @@ final class Combined
     /**
      * @inheritdoc
      */
-    public function __invoke(array $xs): InputInterface
+    public function __invoke($x): ResultInterface
     {
         $fs = [...$this->fs];
 
         $f = array_shift($fs) ?? false;
 
-        return $f == false ? new Success($xs) : $f($xs)->bind(...$fs);
+        return $f == false ? new Success($x) : $f($x)->bind(...$fs);
     }
 }
