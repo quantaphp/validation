@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace Quanta\Validation;
 
+/**
+ * @template T
+ */
 final class Rule
 {
     /**
-     * @var callable(mixed): bool
+     * @var callable(T): bool
      */
     private $predicate;
 
@@ -22,15 +25,15 @@ final class Rule
     private string $label;
 
     /**
-     * @var array
+     * @var mixed[]
      */
     private array $params;
 
     /**
-     * @param callable(mixed): bool $predicate
-     * @param string                $message
-     * @param string                $label
-     * @param array                 $params
+     * @param callable(T): bool $predicate
+     * @param string            $message
+     * @param string            $label
+     * @param mixed[]           $params
      */
     public function __construct(callable $predicate, string $message, string $label = '', array $params = [])
     {
@@ -41,7 +44,7 @@ final class Rule
     }
 
     /**
-     * @param mixed $x
+     * @param T $x
      * @return \Quanta\Validation\Error[]
      */
     public function __invoke($x): array

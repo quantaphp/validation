@@ -17,14 +17,14 @@ final class Error implements ErrorInterface
     private string $label;
 
     /**
-     * @var array
+     * @var mixed[]
      */
     private array $params;
 
     /**
      * @param string    $message
      * @param string    $label
-     * @param array     $params
+     * @param mixed[]   $params
      */
     public function __construct(string $message, string $label = '', array $params = [])
     {

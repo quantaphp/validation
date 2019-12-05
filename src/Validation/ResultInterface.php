@@ -7,20 +7,15 @@ namespace Quanta\Validation;
 interface ResultInterface
 {
     /**
-     * @param callable ...$fs
-     * @return \Quanta\Validation\ResultInterface
+     * @param string $key
+     * @return \Quanta\Validation\Input|\Quanta\Validation\Failure
      */
-    public function map(callable ...$fs): ResultInterface;
+    public function input(string $key): InputInterface;
 
     /**
-     * @param callable(mixed): (\Quanta\Validation\Success|\Quanta\Validation\Failure) ...$fs
-     * @return \Quanta\Validation\ResultInterface
-     */
-    public function bind(callable ...$fs): ResultInterface;
-
-    /**
-     * @param callable(mixed): mixed                                        $success
-     * @param callable(\Quanta\Validation\ErrorInterface ...$errors): mixed $failure
+     * @param callable $success
+     * @param callable $failure
+     * @return mixed
      */
     public function extract(callable $success, callable $failure);
 }

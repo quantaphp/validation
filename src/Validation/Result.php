@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Quanta\Validation;
 
-final class Merged
+final class Result
 {
     /**
      * @var Array<int, callable(mixed[]): (\Quanta\Validation\Input|\Quanta\Validation\Failure)>
@@ -21,14 +21,16 @@ final class Merged
 
     /**
      * @param mixed[] $xs
-     * @return \Quanta\Validation\Input|\Quanta\Validation\Failure
+     * @return \Quanta\Validation\Success|\Quanta\Validation\Failure
      */
-    public function __invoke(array $xs): InputInterface
+    public function __invoke(array $xs): ResultInterface
     {
-        $inputs = array_map(fn ($f) => $f($xs), $this->fs);
+        $fs = [...$this->fs];
 
-        $input = array_shift($inputs) ?? false;
+        $f = array_shift($fs) ?? false;
 
-        return $input == false ? new Success($xs) : $input->merge(...$inputs);
+        return $f == false
+            ? new Success($xs)
+            : $f($xs)->bind(...$fs)->result();
     }
 }

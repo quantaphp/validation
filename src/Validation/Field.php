@@ -12,31 +12,32 @@ final class Field
     private string $key;
 
     /**
-     * @var callable(mixed): (\Quanta\Validation\Success|\Quanta\Validation\Failure)
+     * @var Array<int, callable(mixed): (\Quanta\Validation\Success|\Quanta\Validation\Failure)>
      */
-    private $f;
+    private $fs;
 
     /**
      * @param string                                                                    $key
-     * @param callable(mixed): (\Quanta\Validation\Success|\Quanta\Validation\Failure)  $f
+     * @param callable(mixed): (\Quanta\Validation\Success|\Quanta\Validation\Failure)  ...$fs
      */
-    public function __construct(string $key, callable $f)
+    public function __construct(string $key, callable ...$fs)
     {
         $this->key = $key;
-        $this->f = $f;
+        $this->fs = $fs;
     }
 
     /**
-     * @param array $xs
+     * @param mixed[] $xs
      * @return \Quanta\Validation\Input|\Quanta\Validation\Failure
      */
     public function __invoke(array $xs): InputInterface
     {
-        return ($this->f)($xs[$this->key])->extract(
-            fn ($x) => new Input([$this->key => $x]),
-            fn (...$errors) => new Failure(...array_map(function ($error) {
-                return new NestedError($this->key, $error);
-            }, $errors)),
-        );
+        $fs = [...$this->fs];
+
+        $f = array_shift($fs) ?? false;
+
+        return $f == false
+            ? new Input($xs)
+            : $f($xs[$this->key])->bind(...$fs)->input($this->key);
     }
 }

@@ -30,7 +30,7 @@ interface ErrorInterface
     /**
      * Return the error params.
      *
-     * @return array
+     * @return mixed[]
      */
     public function params(): array;
 }

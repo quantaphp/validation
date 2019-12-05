@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Quanta\Validation;
 
-final class Failure implements ResultInterface, InputInterface
+final class Failure implements MonadInterface, InputInterface, ResultInterface
 {
     /**
      * @var \Quanta\Validation\ErrorInterface[]
@@ -23,7 +23,7 @@ final class Failure implements ResultInterface, InputInterface
     /**
      * @inheritdoc
      */
-    public function map(callable ...$fs): ResultInterface
+    public function result(): ResultInterface
     {
         return $this;
     }
@@ -31,7 +31,18 @@ final class Failure implements ResultInterface, InputInterface
     /**
      * @inheritdoc
      */
-    public function bind(callable ...$fs): ResultInterface
+    public function input(string $key): InputInterface
+    {
+        return new Failure(...array_map(function ($error) use ($key) {
+            return new NestedError($key, $error);
+        }, $this->errors));
+    }
+
+    /**
+     * @param callable(mixed): \Quanta\Validation\MonadInterface ...$fs
+     * @return \Quanta\Validation\Failure
+     */
+    public function bind(callable ...$fs): MonadInterface
     {
         return $this;
     }

@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace Quanta\Validation;
 
-final class Input implements InputInterface
+final class Input implements MonadInterface, InputInterface
 {
     /**
-     * @var array
+     * @var mixed[]
      */
     private array $xs;
 
     /**
-     * @param array $xs
+     * @param mixed[] $xs
      */
     public function __construct(array $xs)
     {
@@ -22,41 +22,16 @@ final class Input implements InputInterface
     /**
      * @inheritdoc
      */
-    public function map(callable ...$fs)
+    public function result(): ResultInterface
     {
-        $f = array_shift($fs) ?? false;
-
-        return $f === false ? $this : (new self($f($this->xs)))->map(...$fs);
+        return new Success($this->xs);
     }
 
     /**
-     * @inheritdoc
+     * @param callable(mixed): \Quanta\Validation\MonadInterface ...$fs
+     * @return \Quanta\Validation\Input|\Quanta\Validation\Failure
      */
-    public function merge(InputInterface ...$inputs): InputInterface
-    {
-        $input = array_shift($inputs) ?? false;
-
-        if ($input == false) {
-            return $this;
-        }
-
-        if ($input instanceof Input) {
-            return (new self(array_merge($this->xs, $input->xs)))->merge(...$inputs);
-        }
-
-        if ($input instanceof Failure) {
-            return $input->merge(...$inputs);
-        }
-
-        throw new \InvalidArgumentException(
-            sprintf('The given input must be an instance of Quanta\Validation\Input|Quanta\Validation\Failure, %s given', gettype($input))
-        );
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function bind(callable ...$fs)
+    public function bind(callable ...$fs): MonadInterface
     {
         $f = array_shift($fs) ?? false;
 
@@ -82,8 +57,24 @@ final class Input implements InputInterface
     /**
      * @inheritdoc
      */
-    public function extract(callable $success, callable $failure)
+    public function merge(InputInterface ...$inputs): InputInterface
     {
-        return $success($this->xs);
+        $input = array_shift($inputs) ?? false;
+
+        if ($input == false) {
+            return $this;
+        }
+
+        if ($input instanceof Input) {
+            return (new self(array_merge($this->xs, $input->xs)))->merge(...$inputs);
+        }
+
+        if ($input instanceof Failure) {
+            return $input->merge(...$inputs);
+        }
+
+        throw new \InvalidArgumentException(
+            sprintf('The given input must be an instance of Quanta\Validation\Input|Quanta\Validation\Failure, %s given', gettype($input))
+        );
     }
 }

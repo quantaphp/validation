@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Quanta\Validation;
 
-final class Success implements ResultInterface
+final class Success implements MonadInterface, ResultInterface
 {
     /**
      * @var mixed
@@ -22,17 +22,16 @@ final class Success implements ResultInterface
     /**
      * @inheritdoc
      */
-    public function map(callable ...$fs): ResultInterface
+    public function input(string $key): InputInterface
     {
-        $f = array_shift($fs) ?? false;
-
-        return $f === false ? $this : (new self($f($this->x)))->map(...$fs);
+        return new Input([$key => $this->x]);
     }
 
     /**
-     * @inheritdoc
+     * @param callable(mixed): \Quanta\Validation\MonadInterface ...$fs
+     * @return \Quanta\Validation\Success|\Quanta\Validation\Failure
      */
-    public function bind(callable ...$fs): ResultInterface
+    public function bind(callable ...$fs): MonadInterface
     {
         $f = array_shift($fs) ?? false;
 

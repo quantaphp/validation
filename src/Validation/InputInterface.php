@@ -7,14 +7,14 @@ namespace Quanta\Validation;
 interface InputInterface
 {
     /**
-     * @param \Quanta\Validation\InputInterface ...$inputs
-     * @return \Quanta\Validation\InputInterface
+     * @return \Quanta\Validation\Success|\Quanta\Validation\Failure
      */
-    public function merge(InputInterface ...$inputs): InputInterface;
+    public function result(): ResultInterface;
 
     /**
-     * @param callable(array): mixed                                        $success
-     * @param callable(\Quanta\Validation\ErrorInterface ...$errors): mixed $failure
+     * @param \Quanta\Validation\InputInterface ...$inputs
+     * @return \Quanta\Validation\Input|\Quanta\Validation\Failure
+     * @throws \InvalidArgumentException
      */
-    public function extract(callable $success, callable $failure);
+    public function merge(InputInterface ...$inputs): InputInterface;
 }
