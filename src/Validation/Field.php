@@ -36,6 +36,10 @@ final class Field
 
         $f = array_shift($fs) ?? false;
 
+        if ($f == false){
+            return new Data([$this->key => $xs[$this->key]]);
+        }
+
         return $f($xs[$this->key])->bind(...$fs)->input($this->key);
     }
 }
