@@ -19,23 +19,24 @@ final class TraverseA
 
     /**
      * @param mixed[] $xs
-     * @return \Quanta\Validation\Data|\Quanta\Validation\Failure
+     * @return \Quanta\Validation\Success|\Quanta\Validation\Failure
      */
-    public function __invoke(array $xs): InputInterface
+    public function __invoke(array $xs): ResultInterface
     {
         $fs = [...$this->fs];
 
         $f = array_shift($fs) ?? false;
 
         if (count($xs) == 0 || $f == false) {
-            return new Data($xs);
+            return new Success($xs);
         }
 
-        $val = reset($xs);
-        $key = (string) key($xs);
+        $map = fn (string $key, $val) => $f($val)->bind(...$fs)->input($key);
 
-        $xs = array_slice($xs, 1, null, true);
+        $init = new Data([]);
+        $inputs = array_map($map, array_keys($xs), $xs);
+        $reduce = fn ($merged, $input) => $merged->merge($input);
 
-        return $f($val)->bind(...$fs)->input($key)->merge($this($xs));
+        return array_reduce($inputs, $reduce, $init)->result();
     }
 }

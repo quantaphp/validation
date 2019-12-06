@@ -19,16 +19,16 @@ final class TraverseM
 
     /**
      * @param mixed[] $xs
-     * @return \Quanta\Validation\Data|\Quanta\Validation\Failure
+     * @return \Quanta\Validation\Success|\Quanta\Validation\Failure
      */
-    public function __invoke(array $xs): InputInterface
+    public function __invoke(array $xs): ResultInterface
     {
         $fs = [...$this->fs];
 
         $f = array_shift($fs) ?? false;
 
         if (count($xs) == 0 || $f == false) {
-            return new Data($xs);
+            return new Success($xs);
         }
 
         $val = reset($xs);
@@ -37,11 +37,8 @@ final class TraverseM
         $xs = array_slice($xs, 1, null, true);
 
         return $f($val)->bind(...$fs)->input($key)->result()
-            ->bind(fn ($head) => $this($xs)->result()
-            ->bind(fn (array $tail) => array_merge([$key => $head], $tail))
-        )->extract(
-            fn (array $xs) => new Data($xs),
-            fn (...$errors) => new Failure(...$errors),
+            ->bind(fn ($head) => $this($xs)
+            ->bind(fn (array $tail) => new Success(array_merge([$key => $head], $tail)))
         );
     }
 }
