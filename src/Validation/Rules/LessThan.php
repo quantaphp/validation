@@ -24,6 +24,7 @@ final class LessThan
     /**
      * @param mixed $x
      * @return \Quanta\Validation\Error[]
+     * @throws \InvalidArgumentException
      */
     public function __invoke($x): array
     {

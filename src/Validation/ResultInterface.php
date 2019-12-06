@@ -8,9 +8,16 @@ interface ResultInterface
 {
     /**
      * @param string $key
-     * @return \Quanta\Validation\Input|\Quanta\Validation\Failure
+     * @return \Quanta\Validation\Data|\Quanta\Validation\Failure
      */
     public function input(string $key): InputInterface;
+
+    /**
+     * @param callable(mixed): \Quanta\Validation\ResultInterface ...$fs
+     * @return \Quanta\Validation\Success|\Quanta\Validation\Failure
+     * @throws \InvalidArgumentException
+     */
+    public function bind(callable ...$fs): ResultInterface;
 
     /**
      * @param callable $success

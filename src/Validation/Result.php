@@ -7,12 +7,12 @@ namespace Quanta\Validation;
 final class Result
 {
     /**
-     * @var Array<int, callable(mixed[]): (\Quanta\Validation\Input|\Quanta\Validation\Failure)>
+     * @var Array<int, callable(mixed[]): (\Quanta\Validation\Data|\Quanta\Validation\Failure)>
      */
     private array $fs;
 
     /**
-     * @param callable(mixed[]): (\Quanta\Validation\Input|\Quanta\Validation\Failure) ...$fs
+     * @param callable(mixed[]): (\Quanta\Validation\Data|\Quanta\Validation\Failure) ...$fs
      */
     public function __construct(callable ...$fs)
     {
@@ -25,12 +25,10 @@ final class Result
      */
     public function __invoke(array $xs): ResultInterface
     {
-        $fs = [...$this->fs];
+        $inputs = array_map(fn ($f) => $f($xs), $this->fs);
 
-        $f = array_shift($fs) ?? false;
+        $input = array_shift($inputs) ?? false;
 
-        return $f == false
-            ? new Success($xs)
-            : $f($xs)->bind(...$fs)->result();
+        return $input == false ? new Success($xs) : $input->merge(...$inputs)->result();
     }
 }

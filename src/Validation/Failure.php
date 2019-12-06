@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Quanta\Validation;
 
-final class Failure implements MonadInterface, InputInterface, ResultInterface
+final class Failure implements InputInterface, ResultInterface
 {
     /**
      * @var \Quanta\Validation\ErrorInterface[]
@@ -39,15 +39,6 @@ final class Failure implements MonadInterface, InputInterface, ResultInterface
     }
 
     /**
-     * @param callable(mixed): \Quanta\Validation\MonadInterface ...$fs
-     * @return \Quanta\Validation\Failure
-     */
-    public function bind(callable ...$fs): MonadInterface
-    {
-        return $this;
-    }
-
-    /**
      * @inheritdoc
      */
     public function merge(InputInterface ...$inputs): InputInterface
@@ -58,7 +49,7 @@ final class Failure implements MonadInterface, InputInterface, ResultInterface
             return $this;
         }
 
-        if ($input instanceof Input) {
+        if ($input instanceof Data) {
             return $this->merge(...$inputs);
         }
 
@@ -67,8 +58,16 @@ final class Failure implements MonadInterface, InputInterface, ResultInterface
         }
 
         throw new \InvalidArgumentException(
-            sprintf('The given input must be an instance of Quanta\Validation\Input|Quanta\Validation\Failure, %s given', gettype($input))
+            sprintf('The given input must be an instance of Quanta\Validation\Data|Quanta\Validation\Failure, %s given', gettype($input))
         );
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function bind(callable ...$fs): self
+    {
+        return $this;
     }
 
     /**

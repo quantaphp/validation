@@ -2,16 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Quanta;
-
-use Quanta\Validation\Success;
-use Quanta\Validation\Failure;
-use Quanta\Validation\ResultInterface;
+namespace Quanta\Validation;
 
 /**
  * @template T
  */
-final class Validation
+final class Is
 {
     /**
      * @var Array<int, callable(T): (\Quanta\Validation\Error[])>
@@ -32,12 +28,14 @@ final class Validation
      */
     public function __invoke($x): ResultInterface
     {
+        $errors = [];
+
         foreach ($this->rules as $rule) {
-            if (count($errors = $rule($x)) > 0) {
-                return new Failure(...$errors);
-            }
+            $errors = [...$errors, ...$rule($x)];
         }
 
-        return new Success($x);
+        return count($errors) == 0
+            ? new Success($x)
+            : new Failure(...$errors);
     }
 }

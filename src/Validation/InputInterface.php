@@ -13,7 +13,7 @@ interface InputInterface
 
     /**
      * @param \Quanta\Validation\InputInterface ...$inputs
-     * @return \Quanta\Validation\Input|\Quanta\Validation\Failure
+     * @return \Quanta\Validation\Data|\Quanta\Validation\Failure
      * @throws \InvalidArgumentException
      */
     public function merge(InputInterface ...$inputs): InputInterface;

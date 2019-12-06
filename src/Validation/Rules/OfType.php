@@ -6,8 +6,11 @@ namespace Quanta\Validation\Rules;
 
 use Quanta\Validation\Error;
 
-final class Type
+final class OfType
 {
+    /**
+     * @var array[]
+     */
     const MAP = [
         'bool' => [['boolean'], 'must be a boolean'],
         'boolean' => [['boolean'], 'must be a boolean'],
@@ -22,8 +25,14 @@ final class Type
         'null' => [['null'], 'must be null'],
     ];
 
+    /**
+     * @var string
+     */
     private string $type;
 
+    /**
+     * @param string $type
+     */
     public function __construct(string $type)
     {
         $this->type = $type;

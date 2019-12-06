@@ -24,6 +24,7 @@ final class GreaterThan
     /**
      * @param mixed $x
      * @return \Quanta\Validation\Error[]
+     * @throws \InvalidArgumentException
      */
     public function __invoke($x): array
     {

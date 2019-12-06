@@ -28,7 +28,7 @@ final class Field
 
     /**
      * @param mixed[] $xs
-     * @return \Quanta\Validation\Input|\Quanta\Validation\Failure
+     * @return \Quanta\Validation\Data|\Quanta\Validation\Failure
      */
     public function __invoke(array $xs): InputInterface
     {
@@ -36,8 +36,6 @@ final class Field
 
         $f = array_shift($fs) ?? false;
 
-        return $f == false
-            ? new Input($xs)
-            : $f($xs[$this->key])->bind(...$fs)->input($this->key);
+        return $f($xs[$this->key])->bind(...$fs)->input($this->key);
     }
 }
