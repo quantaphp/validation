@@ -38,7 +38,10 @@ final class TraverseM
 
         return $f($val)->bind(...$fs)->input($key)->result()
             ->bind(fn ($head) => $this($xs)->result()
-            ->bind(fn ($tail) => new Quanta\Validation\Data(array_merge([$key => $head], $tail))
-        ));
+            ->bind(fn (array $tail) => array_merge([$key => $head], $tail))
+        )->extract(
+            fn (array $xs) => new Data($xs),
+            fn (...$errors) => new Failure(...$errors),
+        );
     }
 }
