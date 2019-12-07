@@ -31,12 +31,10 @@ final class TraverseA
             return new Success($xs);
         }
 
-        $map = fn (string $key, $val) => $f($val)->bind(...$fs)->input($key);
+        $inputs = array_map(function (string $key, $val) use ($f, $fs) {
+            return $f($val)->bind(...$fs)->input($key);
+        }, array_keys($xs), $xs);
 
-        $init = new Data([]);
-        $inputs = array_map($map, array_keys($xs), $xs);
-        $reduce = fn ($merged, $input) => $merged->merge($input);
-
-        return array_reduce($inputs, $reduce, $init)->result();
+        return array_shift($inputs)->merge(...$inputs)->result();
     }
 }
