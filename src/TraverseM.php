@@ -5,12 +5,12 @@ namespace Quanta\Validation;
 final class TraverseM
 {
     /**
-     * @var Array<int, callable(mixed): (\Quanta\Validation\Success|\Quanta\Validation\Failure)>
+     * @var Array<int, callable(mixed): \Quanta\Validation\ResultInterface>
      */
     private array $fs;
 
     /**
-     * @param callable(mixed): (\Quanta\Validation\Success|\Quanta\Validation\Failure) ...$fs
+     * @param callable(mixed): \Quanta\Validation\ResultInterface ...$fs
      */
     public function __construct(callable ...$fs)
     {

@@ -17,13 +17,13 @@ final class Field
     private $fallback;
 
     /**
-     * @var Array<int, callable(mixed): (\Quanta\Validation\Success|\Quanta\Validation\Failure)>
+     * @var Array<int, callable(mixed): \Quanta\Validation\ResultInterface>
      */
     private $fs;
 
     /**
-     * @param string                                                                    $key
-     * @param callable(mixed): (\Quanta\Validation\Success|\Quanta\Validation\Failure)  ...$fs
+     * @param string                                                $key
+     * @param callable(mixed): \Quanta\Validation\ResultInterface   ...$fs
      * @return \Quanta\Validation\Field
      */
     public static function required(string $key, callable ...$fs): self
@@ -32,9 +32,9 @@ final class Field
     }
 
     /**
-     * @param string                                                                    $key
-     * @param mixed                                                                     $x
-     * @param callable(mixed): (\Quanta\Validation\Success|\Quanta\Validation\Failure)  ...$fs
+     * @param string                                                $key
+     * @param mixed                                                 $x
+     * @param callable(mixed): \Quanta\Validation\ResultInterface   ...$fs
      * @return \Quanta\Validation\Field
      */
     public static function optional(string $key, $x, callable ...$fs): self
@@ -45,7 +45,7 @@ final class Field
     /**
      * @param string                                                                    $key
      * @param callable(string): (\Quanta\Validation\Data|\Quanta\Validation\Failure)    $fallback
-     * @param callable(mixed): (\Quanta\Validation\Success|\Quanta\Validation\Failure)  ...$fs
+     * @param callable(mixed): \Quanta\Validation\ResultInterface                       ...$fs
      */
     public function __construct(string $key, callable $fallback, callable ...$fs)
     {

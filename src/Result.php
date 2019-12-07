@@ -7,12 +7,12 @@ namespace Quanta\Validation;
 final class Result
 {
     /**
-     * @var Array<int, callable(mixed[]): (\Quanta\Validation\Data|\Quanta\Validation\Failure)>
+     * @var Array<int, callable(mixed[]): \Quanta\Validation\InputInterface>
      */
     private array $fs;
 
     /**
-     * @param callable(mixed[]): (\Quanta\Validation\Data|\Quanta\Validation\Failure) ...$fs
+     * @param callable(mixed[]): \Quanta\Validation\InputInterface ...$fs
      */
     public function __construct(callable ...$fs)
     {
