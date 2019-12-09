@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Quanta\Validation;
 
-final class Success implements ResultInterface
+final class Success implements InputInterface
 {
     /**
      * @var mixed
@@ -22,15 +22,39 @@ final class Success implements ResultInterface
     /**
      * @inheritdoc
      */
-    public function input(string $key): InputInterface
+    public function nested(string $key): InputInterface
     {
-        return new Data([$key => $this->x]);
+        return new self([$key => $this->x]);
     }
 
     /**
      * @inheritdoc
      */
-    public function bind(callable ...$fs): ResultInterface
+    public function merge(InputInterface ...$inputs): InputInterface
+    {
+        $input = array_shift($inputs) ?? false;
+
+        if ($input === false) {
+            return $this;
+        }
+
+        if ($input instanceof Success) {
+            return (new self(array_merge($this->x, $input->x)))->merge(...$inputs);
+        }
+
+        if ($input instanceof Failure) {
+            return $input->merge(...$inputs);
+        }
+
+        throw new \InvalidArgumentException(
+            sprintf('The given input must be an instance of Quanta\Validation\Success|Quanta\Validation\Failure, instance of %s given', get_class($input))
+        );
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function bind(callable ...$fs): InputInterface
     {
         $f = array_shift($fs) ?? false;
 
@@ -40,11 +64,7 @@ final class Success implements ResultInterface
 
         $result = $f($this->x);
 
-        if ($result instanceof Success) {
-            return (new self($result->x))->bind(...$fs);
-        }
-
-        if ($result instanceof Failure) {
+        if ($result instanceof Success || $result instanceof Failure) {
             return $result->bind(...$fs);
         }
 

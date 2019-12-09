@@ -9,12 +9,25 @@ interface InputInterface
     /**
      * @return \Quanta\Validation\Success|\Quanta\Validation\Failure
      */
-    public function result(): ResultInterface;
+    public function nested(string $key): InputInterface;
 
     /**
      * @param \Quanta\Validation\InputInterface ...$inputs
-     * @return \Quanta\Validation\Data|\Quanta\Validation\Failure
-     * @throws \InvalidArgumentException
+     * @return \Quanta\Validation\Success|\Quanta\Validation\Failure
      */
     public function merge(InputInterface ...$inputs): InputInterface;
+
+    /**
+     * @param callable(mixed): \Quanta\Validation\InputInterface ...$fs
+     * @return \Quanta\Validation\Success|\Quanta\Validation\Failure
+     * @throws \InvalidArgumentException
+     */
+    public function bind(callable ...$fs): InputInterface;
+
+    /**
+     * @param callable $success
+     * @param callable $failure
+     * @return mixed
+     */
+    public function extract(callable $success, callable $failure);
 }

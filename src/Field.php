@@ -12,18 +12,18 @@ final class Field
     private string $key;
 
     /**
-     * @var callable(string): (\Quanta\Validation\Data|\Quanta\Validation\Failure)
+     * @var callable(string): (\Quanta\Validation\Success|\Quanta\Validation\Failure)
      */
     private $fallback;
 
     /**
-     * @var Array<int, callable(mixed): \Quanta\Validation\ResultInterface>
+     * @var Array<int, callable(mixed): \Quanta\Validation\InputInterface>
      */
     private $fs;
 
     /**
      * @param string                                                $key
-     * @param callable(mixed): \Quanta\Validation\ResultInterface   ...$fs
+     * @param callable(mixed): \Quanta\Validation\InputInterface    ...$fs
      * @return \Quanta\Validation\Field
      */
     public static function required(string $key, callable ...$fs): self
@@ -34,7 +34,7 @@ final class Field
     /**
      * @param string                                                $key
      * @param mixed                                                 $x
-     * @param callable(mixed): \Quanta\Validation\ResultInterface   ...$fs
+     * @param callable(mixed): \Quanta\Validation\InputInterface    ...$fs
      * @return \Quanta\Validation\Field
      */
     public static function optional(string $key, $x, callable ...$fs): self
@@ -44,8 +44,8 @@ final class Field
 
     /**
      * @param string                                                                    $key
-     * @param callable(string): (\Quanta\Validation\Data|\Quanta\Validation\Failure)    $fallback
-     * @param callable(mixed): \Quanta\Validation\ResultInterface                       ...$fs
+     * @param callable(string): (\Quanta\Validation\Success|\Quanta\Validation\Failure) $fallback
+     * @param callable(mixed): \Quanta\Validation\InputInterface                        ...$fs
      */
     public function __construct(string $key, callable $fallback, callable ...$fs)
     {
@@ -56,7 +56,7 @@ final class Field
 
     /**
      * @param mixed[] $xs
-     * @return \Quanta\Validation\Data|\Quanta\Validation\Failure
+     * @return \Quanta\Validation\Success|\Quanta\Validation\Failure
      */
     public function __invoke(array $xs): InputInterface
     {
@@ -69,9 +69,9 @@ final class Field
         $f = array_shift($fs) ?? false;
 
         if ($f == false){
-            return new Data([$this->key => $xs[$this->key]]);
+            return new Success([$this->key => $xs[$this->key]]);
         }
 
-        return $f($xs[$this->key])->bind(...$fs)->input($this->key);
+        return $f($xs[$this->key])->bind(...$fs)->nested($this->key);
     }
 }

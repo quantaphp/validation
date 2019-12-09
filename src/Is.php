@@ -26,7 +26,7 @@ final class Is
      * @param T $x
      * @return \Quanta\Validation\Success|\Quanta\Validation\Failure
      */
-    public function __invoke($x): ResultInterface
+    public function __invoke($x): InputInterface
     {
         $errors = [];
 

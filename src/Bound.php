@@ -1,13 +1,15 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Quanta\Validation;
 
-final class TraverseA
+final class Bound
 {
     /**
      * @var Array<int, callable(mixed): \Quanta\Validation\InputInterface>
      */
-    private array $fs;
+    private $fs;
 
     /**
      * @param callable(mixed): \Quanta\Validation\InputInterface ...$fs
@@ -18,23 +20,19 @@ final class TraverseA
     }
 
     /**
-     * @param mixed[] $xs
+     * @param mixed $x
      * @return \Quanta\Validation\Success|\Quanta\Validation\Failure
      */
-    public function __invoke(array $xs): InputInterface
+    public function __invoke($x): InputInterface
     {
         $fs = [...$this->fs];
 
         $f = array_shift($fs) ?? false;
 
-        if (count($xs) == 0 || $f == false) {
-            return new Success($xs);
+        if ($f == false) {
+            return new Success($x);
         }
 
-        $inputs = array_map(function (string $key, $val) use ($f, $fs) {
-            return $f($val)->bind(...$fs)->nested($key);
-        }, array_keys($xs), $xs);
-
-        return array_shift($inputs)->merge(...$inputs);
+        return $f($x)->bind(...$fs);
     }
 }

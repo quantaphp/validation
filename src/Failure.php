@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Quanta\Validation;
 
-final class Failure implements InputInterface, ResultInterface
+final class Failure implements InputInterface
 {
     /**
      * @var \Quanta\Validation\ErrorInterface[]
@@ -23,15 +23,7 @@ final class Failure implements InputInterface, ResultInterface
     /**
      * @inheritdoc
      */
-    public function result(): ResultInterface
-    {
-        return $this;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function input(string $key): InputInterface
+    public function nested(string $key): InputInterface
     {
         return new Failure(...array_map(function ($error) use ($key) {
             return new NestedError($key, $error);
@@ -45,12 +37,12 @@ final class Failure implements InputInterface, ResultInterface
     {
         $input = array_shift($inputs) ?? false;
 
-        if ($input == false) {
+        if ($input === false) {
             return $this;
         }
 
-        if ($input instanceof Data) {
-            return $this->merge(...$inputs);
+        if ($input instanceof Success) {
+            return $this;
         }
 
         if ($input instanceof Failure) {
@@ -58,7 +50,7 @@ final class Failure implements InputInterface, ResultInterface
         }
 
         throw new \InvalidArgumentException(
-            sprintf('The given input must be an instance of Quanta\Validation\Data|Quanta\Validation\Failure, %s given', gettype($input))
+            sprintf('The given input must be an instance of Quanta\Validation\Success|Quanta\Validation\Failure, instance of %s given', get_class($input))
         );
     }
 

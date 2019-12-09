@@ -5,12 +5,12 @@ namespace Quanta\Validation;
 final class TraverseM
 {
     /**
-     * @var Array<int, callable(mixed): \Quanta\Validation\ResultInterface>
+     * @var Array<int, callable(mixed): \Quanta\Validation\InputInterface>
      */
     private array $fs;
 
     /**
-     * @param callable(mixed): \Quanta\Validation\ResultInterface ...$fs
+     * @param callable(mixed): \Quanta\Validation\InputInterface ...$fs
      */
     public function __construct(callable ...$fs)
     {
@@ -21,7 +21,7 @@ final class TraverseM
      * @param mixed[] $xs
      * @return \Quanta\Validation\Success|\Quanta\Validation\Failure
      */
-    public function __invoke(array $xs): ResultInterface
+    public function __invoke(array $xs): InputInterface
     {
         $fs = [...$this->fs];
 
@@ -36,9 +36,9 @@ final class TraverseM
 
         $xs = array_slice($xs, 1, null, true);
 
-        return $f($val)->bind(...$fs)->input($key)->result()
+        return $f($val)->bind(...$fs)->nested($key)
             ->bind(fn ($head) => $this($xs)
-            ->bind(fn (array $tail) => new Success(array_merge([$key => $head], $tail)))
+            ->bind(fn (array $tail) => new Success(array_merge($head, $tail)))
         );
     }
 }

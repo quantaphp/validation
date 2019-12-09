@@ -21,10 +21,10 @@ final class Optional
 
     /**
      * @param string $key
-     * @return \Quanta\Validation\Data
+     * @return \Quanta\Validation\Success
      */
     public function __invoke(string $key): InputInterface
     {
-        return new Data([$key => $this->x]);
+        return new Success([$key => $this->x]);
     }
 }
