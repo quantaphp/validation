@@ -4,35 +4,39 @@ declare(strict_types=1);
 
 namespace Quanta\Validation;
 
+/**
+ * @template T
+ */
 final class Bound
 {
+    /**
+     * @var null|callable(mixed): \Quanta\Validation\InputInterface
+     */
+    private $f;
+
     /**
      * @var Array<int, callable(mixed): \Quanta\Validation\InputInterface>
      */
     private $fs;
 
     /**
-     * @param callable(mixed): \Quanta\Validation\InputInterface ...$fs
+     * @param null|callable(T): \Quanta\Validation\InputInterface   $f
+     * @param callable(mixed): \Quanta\Validation\InputInterface    ...$fs
      */
-    public function __construct(callable ...$fs)
+    public function __construct(callable $f = null, callable ...$fs)
     {
+        $this->f = $f;
         $this->fs = $fs;
     }
 
     /**
-     * @param mixed $x
+     * @param T $x
      * @return \Quanta\Validation\Success<mixed>|\Quanta\Validation\Failure
      */
     public function __invoke($x): InputInterface
     {
-        $fs = [...$this->fs];
-
-        $f = array_shift($fs) ?? false;
-
-        if ($f == false) {
-            return new Success($x);
-        }
-
-        return $f($x)->bind(...$fs);
+        return is_null($this->f)
+            ? new Success($x)
+            : ($this->f)($x)->bind(...$this->fs);
     }
 }

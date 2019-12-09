@@ -33,11 +33,9 @@ final class Failure implements InputInterface
     /**
      * @inheritdoc
      */
-    public function merge(InputInterface ...$inputs): InputInterface
+    public function merge(InputInterface $input = null, InputInterface ...$inputs): InputInterface
     {
-        $input = array_shift($inputs) ?? false;
-
-        if ($input === false) {
+        if (is_null($input)) {
             return $this;
         }
 
@@ -57,7 +55,7 @@ final class Failure implements InputInterface
     /**
      * @inheritdoc
      */
-    public function bind(callable ...$fs): self
+    public function bind(callable $f = null, callable ...$fs): self
     {
         return $this;
     }

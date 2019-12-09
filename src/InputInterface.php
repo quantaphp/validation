@@ -12,17 +12,19 @@ interface InputInterface
     public function nested(string $key): InputInterface;
 
     /**
-     * @param \Quanta\Validation\InputInterface ...$inputs
+     * @param null|\Quanta\Validation\InputInterface    $input
+     * @param \Quanta\Validation\InputInterface         ...$inputs
      * @return \Quanta\Validation\Success<mixed[]>|\Quanta\Validation\Failure
      */
-    public function merge(InputInterface ...$inputs): InputInterface;
+    public function merge(InputInterface $input = null, InputInterface ...$inputs): InputInterface;
 
     /**
-     * @param callable(mixed): \Quanta\Validation\InputInterface ...$fs
+     * @param null|callable(mixed): \Quanta\Validation\InputInterface   $f
+     * @param callable(mixed): \Quanta\Validation\InputInterface        ...$fs
      * @return \Quanta\Validation\Success<mixed>|\Quanta\Validation\Failure
      * @throws \InvalidArgumentException
      */
-    public function bind(callable ...$fs): InputInterface;
+    public function bind(callable $f = null, callable ...$fs): InputInterface;
 
     /**
      * @param callable $success

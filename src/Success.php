@@ -23,7 +23,7 @@ final class Success implements InputInterface
     }
 
     /**
-     * @inheritdoc
+     * @return \Quanta\Validation\Success<array<string, T>>
      */
     public function nested(string $key): InputInterface
     {
@@ -33,11 +33,9 @@ final class Success implements InputInterface
     /**
      * @inheritdoc
      */
-    public function merge(InputInterface ...$inputs): InputInterface
+    public function merge(InputInterface $input = null, InputInterface ...$inputs): InputInterface
     {
-        $input = array_shift($inputs) ?? false;
-
-        if ($input === false) {
+        if (is_null($input)) {
             return $this;
         }
 
@@ -55,13 +53,14 @@ final class Success implements InputInterface
     }
 
     /**
-     * @inheritdoc
+     * @param null|callable(T): \Quanta\Validation\InputInterface   $f
+     * @param callable(mixed): \Quanta\Validation\InputInterface    ...$fs
+     * @return \Quanta\Validation\Success<mixed>|\Quanta\Validation\Failure
+     * @throws \InvalidArgumentException
      */
-    public function bind(callable ...$fs): InputInterface
+    public function bind(callable $f = null, callable ...$fs): InputInterface
     {
-        $f = array_shift($fs) ?? false;
-
-        if ($f === false) {
+        if (is_null($f)) {
             return $this;
         }
 
@@ -77,7 +76,9 @@ final class Success implements InputInterface
     }
 
     /**
-     * @inheritdoc
+     * @param callable(T): mixed    $success
+     * @param callable              $failure
+     * @return mixed
      */
     public function extract(callable $success, callable $failure)
     {

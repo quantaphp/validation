@@ -4,35 +4,39 @@ declare(strict_types=1);
 
 namespace Quanta\Validation;
 
+/**
+ * @template T
+ */
 final class Merged
 {
     /**
-     * @var Array<int, callable(mixed): \Quanta\Validation\InputInterface>
+     * @var null|callable(T): \Quanta\Validation\InputInterface
+     */
+    private $f;
+
+    /**
+     * @var Array<int, callable(T): \Quanta\Validation\InputInterface>
      */
     private $fs;
 
     /**
-     * @param callable(mixed): \Quanta\Validation\InputInterface ...$fs
+     * @param null|callable(T): \Quanta\Validation\InputInterface   $f
+     * @param callable(T): \Quanta\Validation\InputInterface        ...$fs
      */
-    public function __construct(callable ...$fs)
+    public function __construct(callable $f = null, callable ...$fs)
     {
+        $this->f = $f;
         $this->fs = $fs;
     }
 
     /**
-     * @param mixed $x
-     * @return \Quanta\Validation\Success<mixed>|\Quanta\Validation\Failure
+     * @param T $x
+     * @return \Quanta\Validation\Success<T>|\Quanta\Validation\Success<mixed[]>|\Quanta\Validation\Failure
      */
     public function __invoke($x): InputInterface
     {
-        $inputs = array_map(fn ($f) => $f($x), $this->fs);
-
-        $input = array_shift($inputs) ?? false;
-
-        if ($input == false) {
-            return new Success($x);
-        }
-
-        return $input->merge(...$inputs);
+        return is_null($this->f)
+            ? new Success($x)
+            : ($this->f)($x)->merge(...array_map(fn ($f) => $f($x), $this->fs));
     }
 }

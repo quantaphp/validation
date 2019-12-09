@@ -17,6 +17,11 @@ final class Field
     private $fallback;
 
     /**
+     * @var null|callable(mixed): \Quanta\Validation\InputInterface
+     */
+    private $f;
+
+    /**
      * @var Array<int, callable(mixed): \Quanta\Validation\InputInterface>
      */
     private $fs;
@@ -45,12 +50,14 @@ final class Field
     /**
      * @param string                                                                                            $key
      * @param callable(string): (\Quanta\Validation\Success<array<string, mixed>>|\Quanta\Validation\Failure)   $fallback
+     * @param null|callable(mixed): \Quanta\Validation\InputInterface                                           $f
      * @param callable(mixed): \Quanta\Validation\InputInterface                                                ...$fs
      */
-    public function __construct(string $key, callable $fallback, callable ...$fs)
+    public function __construct(string $key, callable $fallback, callable $f = null, callable ...$fs)
     {
         $this->key = $key;
         $this->fallback = $fallback;
+        $this->f = $f;
         $this->fs = $fs;
     }
 
@@ -64,14 +71,10 @@ final class Field
             return ($this->fallback)($this->key);
         }
 
-        $fs = [...$this->fs];
+        $x = $xs[$this->key];
 
-        $f = array_shift($fs) ?? false;
-
-        if ($f == false){
-            return new Success([$this->key => $xs[$this->key]]);
-        }
-
-        return $f($xs[$this->key])->bind(...$fs)->nested($this->key);
+        return is_null($this->f)
+            ? new Success([$this->key => $x])
+            : ($this->f)($x)->bind(...$this->fs)->nested($this->key);
     }
 }
