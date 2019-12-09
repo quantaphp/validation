@@ -4,15 +4,18 @@ declare(strict_types=1);
 
 namespace Quanta\Validation;
 
+/**
+ * @template T
+ */
 final class Success implements InputInterface
 {
     /**
-     * @var mixed
+     * @var T
      */
     private $x;
 
     /**
-     * @param mixed $x
+     * @param T $x
      */
     public function __construct($x)
     {

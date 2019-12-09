@@ -24,7 +24,7 @@ final class Is
 
     /**
      * @param T $x
-     * @return \Quanta\Validation\Success|\Quanta\Validation\Failure
+     * @return \Quanta\Validation\Success<T>|\Quanta\Validation\Failure
      */
     public function __invoke($x): InputInterface
     {

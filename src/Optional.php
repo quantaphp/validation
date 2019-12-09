@@ -4,15 +4,18 @@ declare(strict_types=1);
 
 namespace Quanta\Validation;
 
+/**
+ * @template T
+ */
 final class Optional
 {
     /**
-     * @var mixed
+     * @var T
      */
     private $x;
 
     /**
-     * @param mixed $x
+     * @param T $x
      */
     public function __construct($x)
     {
@@ -21,7 +24,7 @@ final class Optional
 
     /**
      * @param string $key
-     * @return \Quanta\Validation\Success
+     * @return \Quanta\Validation\Success<array<string, T>>
      */
     public function __invoke(string $key): InputInterface
     {

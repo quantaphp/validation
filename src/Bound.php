@@ -21,7 +21,7 @@ final class Bound
 
     /**
      * @param mixed $x
-     * @return \Quanta\Validation\Success|\Quanta\Validation\Failure
+     * @return \Quanta\Validation\Success<mixed>|\Quanta\Validation\Failure
      */
     public function __invoke($x): InputInterface
     {

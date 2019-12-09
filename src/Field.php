@@ -12,7 +12,7 @@ final class Field
     private string $key;
 
     /**
-     * @var callable(string): (\Quanta\Validation\Success|\Quanta\Validation\Failure)
+     * @var callable(string): (\Quanta\Validation\Success<array<string, mixed>>|\Quanta\Validation\Failure)
      */
     private $fallback;
 
@@ -43,9 +43,9 @@ final class Field
     }
 
     /**
-     * @param string                                                                    $key
-     * @param callable(string): (\Quanta\Validation\Success|\Quanta\Validation\Failure) $fallback
-     * @param callable(mixed): \Quanta\Validation\InputInterface                        ...$fs
+     * @param string                                                                                            $key
+     * @param callable(string): (\Quanta\Validation\Success<array<string, mixed>>|\Quanta\Validation\Failure)   $fallback
+     * @param callable(mixed): \Quanta\Validation\InputInterface                                                ...$fs
      */
     public function __construct(string $key, callable $fallback, callable ...$fs)
     {
@@ -56,7 +56,7 @@ final class Field
 
     /**
      * @param mixed[] $xs
-     * @return \Quanta\Validation\Success|\Quanta\Validation\Failure
+     * @return \Quanta\Validation\Success<array<string, mixed>>|\Quanta\Validation\Failure
      */
     public function __invoke(array $xs): InputInterface
     {

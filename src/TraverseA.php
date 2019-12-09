@@ -19,7 +19,7 @@ final class TraverseA
 
     /**
      * @param mixed[] $xs
-     * @return \Quanta\Validation\Success|\Quanta\Validation\Failure
+     * @return \Quanta\Validation\Success<mixed[]>|\Quanta\Validation\Failure
      */
     public function __invoke(array $xs): InputInterface
     {
