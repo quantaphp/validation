@@ -28,9 +28,11 @@ final class Matching
     public function __invoke(string $x): array
     {
         return preg_match($this->pattern, $x) === 1 ? [] : [
-            new Error(sprintf('must match %s', $this->pattern), self::class, [
-                'value' => $x, 'pattern' => $this->pattern,
-            ]),
+            new Error(
+                sprintf('must match %s', $this->pattern),
+                self::class,
+                ['value' => $x, 'pattern' => $this->pattern],
+            ),
         ];
     }
 }

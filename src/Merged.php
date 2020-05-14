@@ -10,33 +10,32 @@ namespace Quanta\Validation;
 final class Merged
 {
     /**
-     * @var null|callable(T): \Quanta\Validation\InputInterface
+     * @var array<int, callable(T): \Quanta\Validation\Error[]>
      */
-    private $f;
+    private $rules;
 
     /**
-     * @var Array<int, callable(T): \Quanta\Validation\InputInterface>
+     * @param callable(T): \Quanta\Validation\Error[] ...$rules
      */
-    private $fs;
-
-    /**
-     * @param null|callable(T): \Quanta\Validation\InputInterface   $f
-     * @param callable(T): \Quanta\Validation\InputInterface        ...$fs
-     */
-    public function __construct(callable $f = null, callable ...$fs)
+    public function __construct(callable ...$rules)
     {
-        $this->f = $f;
-        $this->fs = $fs;
+        $this->rules = $rules;
     }
 
     /**
      * @param T $x
-     * @return \Quanta\Validation\Success<T>|\Quanta\Validation\Success<mixed[]>|\Quanta\Validation\Failure
+     * @return \Quanta\Validation\Error[]
      */
-    public function __invoke($x): InputInterface
+    public function __invoke($x): array
     {
-        return is_null($this->f)
-            ? new Success($x)
-            : ($this->f)($x)->merge(...array_map(fn ($f) => $f($x), $this->fs));
+        $errors = [];
+
+        foreach ($this->rules as $rule) {
+            $es = $rule($x);
+            $es = array_values($es);
+            $errors = [...$errors, ...$es];
+        }
+
+        return $errors;
     }
 }

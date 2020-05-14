@@ -22,7 +22,7 @@
         "sort-packages": true
     },
     "require": {
-        "php": ">=7.4"
+        "php": "^7.4"
     },
     "require-dev": {
         "eloquent/phony-kahlan": "^2.0",

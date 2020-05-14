@@ -21,6 +21,7 @@ final class OfType
         'number' => [['integer', 'double'], 'must be a number'],
         'string' => [['string'], 'must be a string'],
         'array' => [['array'], 'must be an array'],
+        'object' => [['object'], 'must be an object'],
         'resource' => [['resource'], 'must be an resource'],
         'null' => [['null'], 'must be null'],
     ];
@@ -50,17 +51,16 @@ final class OfType
             [$valid, $message] = self::MAP[$expected];
 
             return in_array(strtolower(gettype($x)), $valid) ? [] : [
-                new Error($message, self::class, [
-                    'value' => $x,
-                    'type' => $this->type,
-                ]),
+                new Error($message, self::class, ['value' => $x, 'type' => $this->type]),
             ];
         }
 
         return is_object($x) && $x instanceof $this->type ? [] : [
-            new Error(sprintf('must be an instance of %s', $this->type), self::class, [
-                'value' => $x, 'type' => $this->type,
-            ]),
+            new Error(
+                sprintf('must be an instance of %s', $this->type),
+                self::class,
+                ['value' => $x, 'type' => $this->type],
+            ),
         ];
     }
 }

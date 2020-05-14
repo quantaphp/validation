@@ -4,8 +4,13 @@ declare(strict_types=1);
 
 namespace Quanta\Validation;
 
-final class Error implements ErrorInterface
+final class Error
 {
+    /**
+     * @var string[]
+     */
+    private array $keys;
+
     /**
      * @var string
      */
@@ -28,21 +33,33 @@ final class Error implements ErrorInterface
      */
     public function __construct(string $message, string $label = '', array $params = [])
     {
+        $this->keys = [];
         $this->message = $message;
         $this->label = $label;
         $this->params = $params;
     }
 
     /**
-     * @inheritdoc
+     * @param string $key
+     * @return \Quanta\Validation\Error
      */
-    public function name(): string
+    public function nest(string $key): self
     {
-        return '';
+        $this->keys = [$key, ...$this->keys];
+
+        return $this;
     }
 
     /**
-     * @inheritdoc
+     * @return string[]
+     */
+    public function keys(): array
+    {
+        return $this->keys;
+    }
+
+    /**
+     * @return string
      */
     public function message(): string
     {
@@ -50,7 +67,7 @@ final class Error implements ErrorInterface
     }
 
     /**
-     * @inheritdoc
+     * @return string
      */
     public function label(): string
     {
@@ -58,7 +75,7 @@ final class Error implements ErrorInterface
     }
 
     /**
-     * @inheritdoc
+     * @return mixed[]
      */
     public function params(): array
     {

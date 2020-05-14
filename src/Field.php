@@ -4,77 +4,85 @@ declare(strict_types=1);
 
 namespace Quanta\Validation;
 
+/**
+ * @template T
+ */
 final class Field
 {
+    /**
+     * @var string
+     */
+    public const ERROR = '%s is required';
+
     /**
      * @var string
      */
     private string $key;
 
     /**
-     * @var callable(string): (\Quanta\Validation\Success<array<string, mixed>>|\Quanta\Validation\Failure)
+     * @var bool
      */
-    private $fallback;
+    private $required;
 
     /**
-     * @var null|callable(mixed): \Quanta\Validation\InputInterface
+     * @var callable(T): \Quanta\Validation\Error[]
      */
-    private $f;
+    private $rule;
 
     /**
-     * @var Array<int, callable(mixed): \Quanta\Validation\InputInterface>
+     * @param string                                    $key
+     * @param callable(T): \Quanta\Validation\Error[]   ...$rules
+     * @return \Quanta\Validation\Field<T>
      */
-    private $fs;
-
-    /**
-     * @param string                                                $key
-     * @param callable(mixed): \Quanta\Validation\InputInterface    ...$fs
-     * @return \Quanta\Validation\Field
-     */
-    public static function required(string $key, callable ...$fs): self
+    public static function required(string $key, callable ...$rules): self
     {
-        return new self($key, new Required, ...$fs);
+        return new self($key, true, new Bound(...$rules));
     }
 
     /**
-     * @param string                                                $key
-     * @param mixed                                                 $x
-     * @param callable(mixed): \Quanta\Validation\InputInterface    ...$fs
-     * @return \Quanta\Validation\Field
+     * @param string                                    $key
+     * @param callable(T): \Quanta\Validation\Error[]   ...$rules
+     * @return \Quanta\Validation\Field<T>
      */
-    public static function optional(string $key, $x, callable ...$fs): self
+    public static function optional(string $key, callable ...$rules): self
     {
-        return new self($key, new Optional($x), ...$fs);
+        return new self($key, false, new Bound(...$rules));
     }
 
     /**
-     * @param string                                                                                            $key
-     * @param callable(string): (\Quanta\Validation\Success<array<string, mixed>>|\Quanta\Validation\Failure)   $fallback
-     * @param null|callable(mixed): \Quanta\Validation\InputInterface                                           $f
-     * @param callable(mixed): \Quanta\Validation\InputInterface                                                ...$fs
+     * @param string                                    $key
+     * @param bool                                      $required
+     * @param callable(T): \Quanta\Validation\Error[]   $rule
      */
-    public function __construct(string $key, callable $fallback, callable $f = null, callable ...$fs)
+    public function __construct(string $key, bool $required, callable $rule)
     {
         $this->key = $key;
-        $this->fallback = $fallback;
-        $this->f = $f;
-        $this->fs = $fs;
+        $this->required = $required;
+        $this->rule = $rule;
     }
 
     /**
      * @param mixed[] $xs
-     * @return \Quanta\Validation\Success<array<string, mixed>>|\Quanta\Validation\Failure
+     * @return \Quanta\Validation\Error[]
      */
-    public function __invoke(array $xs): InputInterface
+    public function __invoke(array $xs): array
     {
-        if (! key_exists($this->key, $xs)) {
-            return ($this->fallback)($this->key);
+        if (!key_exists($this->key, $xs)) {
+            return !$this->required ? [] : [
+                new Error(
+                    sprintf(self::ERROR, $this->key),
+                    self::class,
+                    ['key' => $this->key],
+                )
+            ];
         }
 
         $x = $xs[$this->key];
 
-        return is_null($this->f)
-            ? new Success([$this->key => $x])
-            : ($this->f)($x)->bind(...$this->fs)->nested($this->key);
+        $errors = ($this->rule)($x);
+
+        return count($errors) > 0
+            ? array_map(fn ($e) => $e->nest($this->key), $errors)
+            : [];
     }
 }

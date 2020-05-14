@@ -6,7 +6,7 @@ namespace Quanta\Validation\Rules;
 
 use Quanta\Validation\Error;
 
-final class LessThan
+final class LessThanEqual
 {
     /**
      * @var int
@@ -58,6 +58,8 @@ final class LessThan
             ];
         }
 
-        throw new \InvalidArgumentException('The given value is not countable');
+        throw new \InvalidArgumentException(
+            'The given argument must be an integer, a float, a string, an array or a countable object'
+        );
     }
 }

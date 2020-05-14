@@ -6,7 +6,7 @@ namespace Quanta\Validation\Rules;
 
 use Quanta\Validation\Error;
 
-final class GreaterThan
+final class GreaterThanEqual
 {
     /**
      * @var int
@@ -38,16 +38,6 @@ final class GreaterThan
             ];
         }
 
-        if (is_countable($x)) {
-            return count($x) >= $this->threshold ? [] : [
-                new Error(
-                    sprintf('must contain at least %s %s', $this->threshold, $this->threshold > 1 ? 'values' : 'value'),
-                    self::class,
-                    ['value' => $x, 'threshold' => $this->threshold],
-                ),
-            ];
-        }
-
         if (is_string($x)) {
             return strlen($x) >= $this->threshold ? [] : [
                 new Error(
@@ -58,6 +48,18 @@ final class GreaterThan
             ];
         }
 
-        throw new \InvalidArgumentException('The given value is not countable');
+        if (is_countable($x)) {
+            return count($x) >= $this->threshold ? [] : [
+                new Error(
+                    sprintf('must contain at least %s %s', $this->threshold, $this->threshold > 1 ? 'values' : 'value'),
+                    self::class,
+                    ['value' => $x, 'threshold' => $this->threshold],
+                ),
+            ];
+        }
+
+        throw new \InvalidArgumentException(
+            'The given argument must be an integer, a float, a string, an array or a countable object'
+        );
     }
 }
