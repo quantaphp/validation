@@ -50,7 +50,7 @@ final class Rule
     public function __invoke($x): array
     {
         return ($this->predicate)($x) ? [] : [
-            new Error($this->message, $this->label, $this->params)
+            new Error($this->message, $this->label, $this->params),
         ];
     }
 }

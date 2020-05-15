@@ -7,7 +7,7 @@ namespace Quanta\Validation;
 /**
  * @template T
  */
-final class Merged
+final class Guard
 {
     /**
      * @var array<int, callable(T): \Quanta\Validation\Error[]>
@@ -24,18 +24,19 @@ final class Merged
 
     /**
      * @param T $x
-     * @return \Quanta\Validation\Error[]
+     * @return T
+     * @throws \Quanta\Validation\InvalidDataException
      */
-    public function __invoke($x): array
+    public function __invoke($x)
     {
-        $errors = [];
+        $merge = fn ($es, $f) => [...$es, ...$f($x)];
 
-        foreach ($this->rules as $rule) {
-            $es = $rule($x);
-            $es = array_values($es);
-            $errors = [...$errors, ...$es];
+        $errors = array_reduce($this->rules, $merge, []);
+
+        if (count($errors) == 0) {
+            return $x;
         }
 
-        return $errors;
+        throw new InvalidDataException(...$errors);
     }
 }

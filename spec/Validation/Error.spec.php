@@ -14,7 +14,7 @@ describe('Error', function () {
 
         describe('->nest()', function () {
 
-            it('should return the same error', function () {
+            it('should return the same Error', function () {
                 $test = $this->error->nest('key');
 
                 expect($test)->toBe($this->error);
@@ -24,7 +24,7 @@ describe('Error', function () {
 
         describe('->keys()', function () {
 
-            it('should return the nested keys in reverse order', function () {
+            it('should return the keys', function () {
                 $test = $this->error->nest('key2')->nest('key1')->keys();
 
                 expect($test)->toEqual(['key1', 'key2']);

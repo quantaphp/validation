@@ -31,6 +31,25 @@ describe('InvalidDataException', function () {
             expect($this->exception)->toBeAnInstanceOf(Throwable::class);
         });
 
+        describe('->nest()', function () {
+
+            it('should return the same InvalidDataException', function () {
+                $test = $this->exception->nest('key');
+
+                expect($test)->toBe($this->exception);
+            });
+
+            it('should nest the errors', function () {
+                $test = $this->exception->nest('key');
+
+                expect($test->errors())->toEqual([
+                    $this->error1->nest('key'),
+                    $this->error2->nest('key'),
+                ]);
+            });
+
+        });
+
         describe('->errors()', function () {
 
             it('should return an array containing the errors', function () {

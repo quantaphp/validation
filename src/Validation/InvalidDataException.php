@@ -23,6 +23,17 @@ final class InvalidDataException extends \Exception
     }
 
     /**
+     * @param string $key
+     * @return \Quanta\Validation\InvalidDataException
+     */
+    public function nest(string $key): self
+    {
+        array_map(fn ($e) => $e->nest($key), $this->errors);
+
+        return $this;
+    }
+
+    /**
      * @return \Quanta\Validation\Error[]
      */
     public function errors(): array
