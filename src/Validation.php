@@ -8,12 +8,11 @@ use Quanta\Validation\InvalidDataException;
 
 /**
  * @template T
- * @template R
  */
 final class Validation
 {
     /**
-     * @var callable(...mixed): R
+     * @var callable
      */
     private $factory;
 
@@ -23,7 +22,7 @@ final class Validation
     private $rules;
 
     /**
-     * @param callable(mixed): R    $factory
+     * @param callable              $factory
      * @param callable(T): mixed    ...$rules
      */
     public function __construct(callable $factory, callable ...$rules)
@@ -34,7 +33,7 @@ final class Validation
 
     /**
      * @param T $x
-     * @return R
+     * @return mixed
      * @throws \Quanta\Validation\InvalidDataException
      */
     public function __invoke($x)
