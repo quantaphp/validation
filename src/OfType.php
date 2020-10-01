@@ -2,9 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Quanta\Validation\Rules;
-
-use Quanta\Validation\Error;
+namespace Quanta\Validation;
 
 final class OfType
 {
@@ -30,6 +28,15 @@ final class OfType
      * @var string
      */
     private string $type;
+
+    /**
+     * @param string $type
+     * @return \Quanta\Validation\Guard<mixed>
+     */
+    public static function guard(string $type): Guard
+    {
+        return new Guard(new self($type));
+    }
 
     /**
      * @param string $type

@@ -34,6 +34,18 @@ final class Rule
      * @param string            $message
      * @param string            $label
      * @param mixed[]           $params
+     * @return \Quanta\Validation\Guard<T>
+     */
+    public static function guard(callable $predicate, string $message, string $label = '', array $params = []): Guard
+    {
+        return new Guard(new self($predicate, $message, $label, $params));
+    }
+
+    /**
+     * @param callable(T): bool $predicate
+     * @param string            $message
+     * @param string            $label
+     * @param mixed[]           $params
      */
     public function __construct(callable $predicate, string $message, string $label = '', array $params = [])
     {

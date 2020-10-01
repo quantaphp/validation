@@ -27,6 +27,18 @@ final class Error
     private array $params;
 
     /**
+     * @param string    $key
+     * @param string    $message
+     * @param string    $label
+     * @param mixed[]   $params
+     * @return \Quanta\Validation\Error
+     */
+    public static function nested(string $key, string $message, string $label = '', array $params = []): self
+    {
+        return (new self($message, $label, $params))->nest($key);
+    }
+
+    /**
      * @param string    $message
      * @param string    $label
      * @param mixed[]   $params
@@ -40,14 +52,20 @@ final class Error
     }
 
     /**
-     * @param string $key
+     * @param string ...$keys
      * @return \Quanta\Validation\Error
      */
-    public function nest(string $key): self
+    public function nest(string ...$keys): self
     {
+        $key = array_pop($keys);
+
+        if (is_null($key)) {
+            return $this;
+        }
+
         $this->keys = [$key, ...$this->keys];
 
-        return $this;
+        return $this->nest(...$keys);
     }
 
     /**

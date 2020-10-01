@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 use function Eloquent\Phony\Kahlan\stub;
 
-use Quanta\Validation;
 use Quanta\Validation\Error;
+use Quanta\Validation\ArrayFactory;
 use Quanta\Validation\InvalidDataException;
 
-describe('Validation', function () {
+describe('ArrayFactory', function () {
 
     beforeEach(function () {
         $this->factory = stub();
@@ -17,7 +17,7 @@ describe('Validation', function () {
     context('when there is no guard', function () {
 
         beforeEach(function () {
-            $this->validation = new Validation($this->factory);
+            $this->validation = new ArrayFactory($this->factory);
         });
 
         describe('->__invoke()', function () {
@@ -37,7 +37,7 @@ describe('Validation', function () {
     context('when there is at least one guard', function () {
 
         beforeEach(function () {
-            $this->validation = new Validation($this->factory,
+            $this->validation = new ArrayFactory($this->factory,
                 $this->guard1 = stub(),
                 $this->guard2 = stub(),
                 $this->guard3 = stub(),

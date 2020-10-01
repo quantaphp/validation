@@ -2,14 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Quanta;
-
-use Quanta\Validation\InvalidDataException;
+namespace Quanta\Validation;
 
 /**
  * @template T
  */
-final class Validation
+final class ArrayFactory
 {
     /**
      * @var callable

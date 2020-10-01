@@ -2,8 +2,19 @@
 
 declare(strict_types=1);
 
+use Quanta\Validation\Guard;
 use Quanta\Validation\Error;
-use Quanta\Validation\Rules\OfType;
+use Quanta\Validation\OfType;
+
+describe('OfType::guard()', function () {
+
+    it('should return a new OfType wrapped in a Guard', function () {
+        $test = OfType::guard('string');
+
+        expect($test)->toEqual(new Guard(new OfType('string')));
+    });
+
+});
 
 describe('OfType', function () {
 

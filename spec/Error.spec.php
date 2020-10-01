@@ -4,6 +4,30 @@ declare(strict_types=1);
 
 use Quanta\Validation\Error;
 
+describe('Error::nested()', function () {
+
+    context('when no label and params are given', function () {
+
+        it('should return an error with default label and params nested with the given key', function () {
+            $test = Error::nested('key', 'message');
+
+            expect($test)->toEqual((new Error('message', '', []))->nest('key'));
+        });
+
+    });
+
+    context('when a label and params are given', function () {
+
+        it('should return an error with the given label and params nested with the given key', function () {
+            $test = Error::nested('key', 'message', 'label', ['key' => 'value']);
+
+            expect($test)->toEqual((new Error('message', 'label', ['key' => 'value']))->nest('key'));
+        });
+
+    });
+
+});
+
 describe('Error', function () {
 
     context('when there is no label and params', function () {
@@ -25,9 +49,9 @@ describe('Error', function () {
         describe('->keys()', function () {
 
             it('should return the keys', function () {
-                $test = $this->error->nest('key2')->nest('key1')->keys();
+                $test = $this->error->nest()->nest('key2', 'key3')->nest('key1')->keys();
 
-                expect($test)->toEqual(['key1', 'key2']);
+                expect($test)->toEqual(['key1', 'key2', 'key3']);
             });
 
         });
@@ -83,9 +107,9 @@ describe('Error', function () {
         describe('->keys()', function () {
 
             it('should return the nested keys in reverse order', function () {
-                $test = $this->error->nest('key2')->nest('key1')->keys();
+                $test = $this->error->nest()->nest('key2', 'key3')->nest('key1')->keys();
 
-                expect($test)->toEqual(['key1', 'key2']);
+                expect($test)->toEqual(['key1', 'key2', 'key3']);
             });
 
         });
