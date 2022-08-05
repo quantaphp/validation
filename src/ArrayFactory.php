@@ -4,55 +4,74 @@ declare(strict_types=1);
 
 namespace Quanta\Validation;
 
-/**
- * @template T
- */
 final class ArrayFactory
 {
     /**
-     * @var callable
+     * Return an ArrayFactory for any given callable.
+     */
+    public static function from(callable $factory): self
+    {
+        return new self(Result::liftn($factory));
+    }
+
+    /**
+     * Return an ArrayFactory returning an object of the given class name.
+     */
+    public static function class(string $class): self
+    {
+        return self::from(fn (...$xs) => new $class(...$xs));
+    }
+
+    /**
+     * @var callable(\Quanta\Validation\Result ...$xs): \Quanta\Validation\Result
      */
     private $factory;
 
     /**
-     * @var array<int, callable(T): mixed>
+     * @var Array<callable(\Quanta\Validation\Result): \Quanta\Validation\Result>
      */
-    private $rules;
+    private array $validations;
 
-    /**
-     * @param callable              $factory
-     * @param callable(T): mixed    ...$rules
-     */
-    public function __construct(callable $factory, callable ...$rules)
+    private function __construct(callable $factory, callable ...$validations)
     {
         $this->factory = $factory;
-        $this->rules = $rules;
+        $this->validations = $validations;
     }
 
     /**
-     * @param T $x
-     * @return mixed
-     * @throws \Quanta\Validation\InvalidDataException
+     * Return a new ArrayFactory with the given array validation functions added.
+     *
+     * Bind is applied on each validation function so they are now composable.
+     *
+     * Each array validation function validates a parameter of the underlying factory.
+     *
+     * @param Array<callable(mixed[]): \Quanta\Validation\Result> ...$validations
      */
-    public function __invoke($x)
+    public function validators(callable ...$validations): self
     {
-        $xs = [];
-        $errors = [];
+        if (count($validations) == 0) return $this;
 
-        foreach ($this->rules as $rule) {
-            try {
-                $xs[] = $rule($x);
-            }
+        $validation = Result::bind(array_shift($validations));
 
-            catch (InvalidDataException $e) {
-                $errors = [...$errors, ...$e->errors()];
-            }
+        $new = new self($this->factory, ...$this->validations, ...[$validation]);
+
+        return $new->validators(...$validations);
+    }
+
+    /**
+     * Each array validation function is applied on the given array, then the results are
+     * used as arguments to call the factory.
+     *
+     * @param mixed[] $data
+     */
+    public function __invoke(array $data): mixed
+    {
+        $results = [];
+
+        foreach ($this->validations as $validation) {
+            $results[] = $validation(Result::success($data));
         }
 
-        if (count($errors) == 0) {
-            return ($this->factory)(...$xs);
-        }
-
-        throw new InvalidDataException(...$errors);
+        return ($this->factory)(...$results)->value();
     }
 }

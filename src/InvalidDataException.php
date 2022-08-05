@@ -4,40 +4,30 @@ declare(strict_types=1);
 
 namespace Quanta\Validation;
 
-final class InvalidDataException extends \Exception
+final class InvalidDataException extends \DomainException
 {
+    public static function error(string $template, mixed ...$xs): self
+    {
+        return new self(Error::from($template, ...$xs));
+    }
+
     /**
      * @var \Quanta\Validation\Error[]
      */
-    private $errors;
+    public readonly array $errors;
 
-    /**
-     * @param \Quanta\Validation\Error $error
-     * @param \Quanta\Validation\Error ...$errors
-     */
     public function __construct(Error $error, Error ...$errors)
     {
         $this->errors = [$error, ...$errors];
 
-        parent::__construct();
+        parent::__construct('invalid data');
     }
 
     /**
-     * @param string $key
-     * @return \Quanta\Validation\InvalidDataException
+     * @return string[]
      */
-    public function nest(string $key): self
+    public function messages(ErrorFormatterInterface $formatter = null): array
     {
-        array_map(fn ($e) => $e->nest($key), $this->errors);
-
-        return $this;
-    }
-
-    /**
-     * @return \Quanta\Validation\Error[]
-     */
-    public function errors(): array
-    {
-        return $this->errors;
+        return array_map($formatter ?? new ErrorFormatter, $this->errors);
     }
 }

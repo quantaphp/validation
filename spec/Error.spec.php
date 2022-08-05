@@ -4,146 +4,72 @@ declare(strict_types=1);
 
 use Quanta\Validation\Error;
 
-describe('Error::nested()', function () {
+describe('Error::from()', function () {
 
-    context('when no label and params are given', function () {
+    context('when no extra parameters are given', function () {
 
-        it('should return an error with default label and params nested with the given key', function () {
-            $test = Error::nested('key', 'message');
+        it('should return an error with the given template', function () {
+            $test = Error::from('message');
 
-            expect($test)->toEqual((new Error('message', '', []))->nest('key'));
+            expect($test)->toBeAnInstanceOf(Error::class);
+            expect($test->keys)->toEqual([]);
+            expect($test->message)->toEqual('message');
         });
-
     });
 
-    context('when a label and params are given', function () {
+    context('when extra parameters are given', function () {
 
-        it('should return an error with the given label and params nested with the given key', function () {
-            $test = Error::nested('key', 'message', 'label', ['key' => 'value']);
+        it('should return an error with the given template formatted with the extra parameters', function () {
+            $test = Error::from('message %s - %s message', 'param1', 'param2');
 
-            expect($test)->toEqual((new Error('message', 'label', ['key' => 'value']))->nest('key'));
+            expect($test)->toBeAnInstanceOf(Error::class);
+            expect($test->keys)->toEqual([]);
+            expect($test->message)->toEqual('message param1 - param2 message');
         });
-
     });
-
 });
 
 describe('Error', function () {
 
-    context('when there is no label and params', function () {
-
-        beforeEach(function () {
-            $this->error = new Error('message');
-        });
-
-        describe('->nest()', function () {
-
-            it('should return the same Error', function () {
-                $test = $this->error->nest('key');
-
-                expect($test)->toBe($this->error);
-            });
-
-        });
-
-        describe('->keys()', function () {
-
-            it('should return the keys', function () {
-                $test = $this->error->nest()->nest('key2', 'key3')->nest('key1')->keys();
-
-                expect($test)->toEqual(['key1', 'key2', 'key3']);
-            });
-
-        });
-
-        describe('->message()', function () {
-
-            it('should return the message', function () {
-                $test = $this->error->message();
-
-                expect($test)->toEqual('message');
-            });
-
-        });
-
-        describe('->label()', function () {
-
-            it('should return an empty string', function () {
-                $test = $this->error->label();
-
-                expect($test)->toEqual('');
-            });
-
-        });
-
-        describe('->params()', function () {
-
-            it('should return an empty array', function () {
-                $test = $this->error->params();
-
-                expect($test)->toEqual([]);
-            });
-
-        });
-
+    beforeEach(function () {
+        $this->error = Error::from('message');
     });
 
-    context('when there is a label and params', function () {
+    describe('->nest()', function () {
 
-        beforeEach(function () {
-            $this->error = new Error('message', 'label', ['key' => 'value']);
+        it('should return a new error with the given key', function () {
+            $test = $this->error->nest('key3')->nest('key1', 'key2');
+
+            expect($test)->not->toBe($this->error);
+            expect($test->keys)->toEqual(['key1', 'key2', 'key3']);
         });
-
-        describe('->nest()', function () {
-
-            it('should return the same error', function () {
-                $test = $this->error->nest('key');
-
-                expect($test)->toBe($this->error);
-            });
-
-        });
-
-        describe('->keys()', function () {
-
-            it('should return the nested keys in reverse order', function () {
-                $test = $this->error->nest()->nest('key2', 'key3')->nest('key1')->keys();
-
-                expect($test)->toEqual(['key1', 'key2', 'key3']);
-            });
-
-        });
-
-        describe('->message()', function () {
-
-            it('should return the message', function () {
-                $test = $this->error->message();
-
-                expect($test)->toEqual('message');
-            });
-
-        });
-
-        describe('->label()', function () {
-
-            it('should return the label', function () {
-                $test = $this->error->label();
-
-                expect($test)->toEqual('label');
-            });
-
-        });
-
-        describe('->params()', function () {
-
-            it('should return the params', function () {
-                $test = $this->error->params();
-
-                expect($test)->toEqual(['key' => 'value']);
-            });
-
-        });
-
     });
 
+    describe('->keys', function () {
+
+        it('should be public', function () {
+            $test = $this->error->nest()->nest('key2', 'key3')->nest('key1');
+
+            expect($test->keys)->toEqual(['key1', 'key2', 'key3']);
+        });
+
+        it('should be readonly', function () {
+            $test = fn () => $this->error->keys = [];
+
+            expect($test)->toThrow();
+        });
+    });
+
+    describe('->message', function () {
+
+        it('should be public', function () {
+            expect($this->error->message)->toEqual('message');
+        });
+
+        it('should be readonly', function () {
+            $test = fn () => $this->error->message = '';
+
+            expect($test)->toThrow();
+        });
+    });
 });

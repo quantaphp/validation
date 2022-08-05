@@ -22,12 +22,12 @@
         "sort-packages": true
     },
     "require": {
-        "php": ">=7.4"
+        "php": ">=8.0"
     },
     "require-dev": {
         "eloquent/phony-kahlan": "^4.0",
-        "kahlan/kahlan": "^5.0",
-        "phpstan/phpstan": "^0.12.0"
+        "kahlan/kahlan": "^5.2",
+        "phpstan/phpstan": "^1.8"
     },
     "autoload": {
         "psr-4": {
