@@ -16,7 +16,15 @@ final class Result
      */
     public static function unit(mixed $value): self
     {
-        return new self(self::SUCCESS, $value);
+        return self::success($value);
+    }
+
+    /**
+     * Return a function that can be applied.
+     */
+    public static function pure(callable $f): self
+    {
+        return self::success(new Pure($f));
     }
 
     /**
@@ -26,7 +34,7 @@ final class Result
      */
     public static function success(mixed $value): self
     {
-        return self::unit($value);
+        return new self(self::SUCCESS, $value);
     }
 
     /**
@@ -35,33 +43,23 @@ final class Result
      */
     public static function final(mixed $value): self
     {
-        return new self(self::SUCCESS, $value, [], true, false);
+        return new self(self::SUCCESS, $value, [], true);
     }
 
     /**
      * Return an error result creating a single error from the given template and variables.
      */
-    public static function error(string $template, mixed ...$xs): self
+    public static function error(string $label, string $default, ...$params): self
     {
-        return self::errors(Error::from($template, ...$xs));
+        return self::errors(new Error($label, $default, ...$params));
     }
 
     /**
      * Return an error result containing the given errors.
      */
-    public static function errors(Error $error, Error ...$errors): self
+    public static function errors(ErrorInterface $error, ErrorInterface ...$errors): self
     {
         return new self(self::ERROR, null, [$error, ...$errors]);
-    }
-
-    /**
-     * Return a successful result containing a callable that must be executed when unwrapping value.
-     *
-     * This allows to not get a callable when unwrapping the result of apply.
-     */
-    private static function callable(callable $f): self
-    {
-        return new self(self::SUCCESS, $f, [], false, true);
     }
 
     /**
@@ -86,15 +84,15 @@ final class Result
     public static function apply(Result $result): callable
     {
         if ($result->status == self::SUCCESS) {
-            $f = $result->value;
-
-            if (!is_callable($f)) {
-                throw new \LogicException('Apply can only be used on a Result containing a callable');
+            if (!$result->value instanceof Pure) {
+                throw new \LogicException(
+                    sprintf('Apply can only be used on a Result containing an instance of %s', Pure::class)
+                );
             }
 
-            return function (self $x) use ($f): self {
+            return function (self $x) use ($result): self {
                 return match ($x->status) {
-                    self::SUCCESS => self::callable(fn (...$xs) => $f($x->value, ...$xs)),
+                    self::SUCCESS => self::success($result->value->curry($x->value)),
                     self::ERROR => $x,
                 };
             };
@@ -126,34 +124,27 @@ final class Result
                 return $result;
             }
 
-            try {
-                $value = $f($result->value);
-            } catch (InvalidDataException $e) {
-                return self::errors(...$e->errors);
-            }
-
-            if (!$value instanceof self) {
-                return self::success($value);
-            }
-
-            return $value;
+            return $f($result->value)->nest(...$result->keys);
         };
     }
 
+    private array $keys;
+
     /**
-     * @param 1|2                           $status
-     * @param mixed                         $value
-     * @param \Quanta\Validation\Error[]    $errors
-     * @param boolean                       $final
-     * @param boolean                       $callable
+     * @param int                                   $status
+     * @param mixed                                 $value
+     * @param \Quanta\Validation\ErrorInterface[]   $errors
+     * @param boolean                               $final
+     * @param string                                ...$keys
      */
     private function __construct(
         private int $status,
         private mixed $value,
         private array $errors = [],
         private bool $final = false,
-        private bool $callable = false,
+        string ...$keys,
     ) {
+        $this->keys = $keys;
     }
 
     /**
@@ -166,12 +157,7 @@ final class Result
             throw new InvalidDataException(...$this->errors);
         }
 
-        if ($this->callable) {
-            // should never happen
-            if (!is_callable($this->value)) {
-                throw new \Exception;
-            }
-
+        if ($this->value instanceof Pure) {
             return ($this->value)();
         }
 
@@ -181,14 +167,25 @@ final class Result
     /**
      * When the result is an error, nest them within the given keys.
      */
-    public function nest(string $key, string ...$keys): self
+    public function nest(string ...$keys): self
     {
+        if (count($keys) == 0) {
+            return $this;
+        }
+
         if ($this->status == self::ERROR) {
-            $errors = array_map(fn ($e) => $e->nest($key, ...$keys), $this->errors);
+            $errors = array_map(fn ($error) => new NestedError($error, ...$keys), $this->errors);
 
             return self::errors(...$errors);
         }
 
-        return $this;
+        return new self(
+            $this->status,
+            $this->value,
+            $this->errors,
+            $this->final,
+            ...$keys,
+            ...$this->keys,
+        );
     }
 }

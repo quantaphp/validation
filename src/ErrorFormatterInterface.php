@@ -6,5 +6,5 @@ namespace Quanta\Validation;
 
 interface ErrorFormatterInterface
 {
-    public function __invoke(Error $error): string;
+    public function __invoke(ErrorInterface $error): string;
 }

@@ -6,27 +6,26 @@ namespace Quanta\Validation;
 
 final class ErrorFormatter implements ErrorFormatterInterface
 {
-    public function __invoke(Error $error): string
+    public function __invoke(ErrorInterface $error): string
     {
-        if (count($error->keys) == 0) {
-            return $error->message;
-        }
+        $keys = $error->keys();
+        $default = $error->default();
+        $params = array_values($error->params());
 
-        $keys = [...$error->keys];
-        $message = $error->message;
+        $message = vsprintf($default, $params);
 
-        if (strpos($error->message, '%s') !== false) {
+        if (count($keys) > 0 && strpos($message, '{key}') !== false) {
             $key = array_pop($keys);
 
-            $message = sprintf($message, $key);
+            $message = str_replace('{key}', $key, $message);
         }
 
-        if (count($keys) == 0) {
-            return $message;
+        if (count($keys) > 0) {
+            $path = implode('', array_map(fn (string $k) => '[' . $k . ']', $keys));
+
+            $message = implode(' ', [$path, $message]);
         }
 
-        $path = implode('', array_map(fn (string $k) => '[' . $k . ']', $keys));
-
-        return implode(' ', [$path, $message]);
+        return $message;
     }
 }

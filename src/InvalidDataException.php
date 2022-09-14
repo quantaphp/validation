@@ -6,17 +6,12 @@ namespace Quanta\Validation;
 
 final class InvalidDataException extends \DomainException
 {
-    public static function error(string $template, mixed ...$xs): self
-    {
-        return new self(Error::from($template, ...$xs));
-    }
-
     /**
-     * @var \Quanta\Validation\Error[]
+     * @var \Quanta\Validation\ErrorInterface[]
      */
-    public readonly array $errors;
+    public array $errors;
 
-    public function __construct(Error $error, Error ...$errors)
+    public function __construct(ErrorInterface $error, ErrorInterface ...$errors)
     {
         $this->errors = [$error, ...$errors];
 

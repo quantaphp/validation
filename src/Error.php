@@ -4,31 +4,38 @@ declare(strict_types=1);
 
 namespace Quanta\Validation;
 
-final class Error
+final class Error implements ErrorInterface
 {
-    public static function from(string $template, mixed ...$xs): self
+    private string $label;
+
+    private string $default;
+
+    private array $params;
+
+    public function __construct(string $label, string $default, ...$params)
     {
-        return new self(vsprintf($template, $xs));
+        $this->label = $label;
+        $this->default = $default;
+        $this->params = $params;
     }
 
-    /**
-     * @var string[]
-     */
-    public readonly array $keys;
-
-    private function __construct(public readonly string $message, string ...$keys)
+    public function label(): string
     {
-        $this->keys = $keys;
+        return $this->label;
     }
 
-    public function nest(string ...$keys): self
+    public function keys(): array
     {
-        if (count($keys) == 0) return $this;
+        return [];
+    }
 
-        $key = array_pop($keys);
+    public function default(): string
+    {
+        return $this->default;
+    }
 
-        $error = new self($this->message, $key, ...$this->keys);
-
-        return $error->nest(...$keys);
+    public function params(): array
+    {
+        return $this->params;
     }
 }
