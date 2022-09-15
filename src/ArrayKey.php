@@ -10,12 +10,32 @@ final class ArrayKey
 {
     public static function required(string $key, callable ...$rules): self
     {
-        return (new self(Result::bind(new Rules\Required($key))))->rule(...$rules);
+        $keys = explode('.', $key);
+
+        $head = array_shift($keys);
+
+        $instance = new self(Result::bind(new Rules\Required($head)));
+
+        $reducer = fn ($instance, $key) => $instance
+            ->with(new Rules\IsArray)
+            ->with(new Rules\Required($key));
+
+        return array_reduce($keys, $reducer, $instance)->rule(...$rules);
     }
 
     public static function optional(string $key, mixed $default = null, ...$rules): self
     {
-        return (new self(Result::bind(new Rules\Optional($key, $default))))->rule(...$rules);
+        $keys = explode('.', $key);
+
+        $head = array_shift($keys);
+
+        $instance = new self(Result::bind(new Rules\Optional($head, $default)));
+
+        $reducer = fn ($instance, $key) => $instance
+            ->with(new Rules\IsArray)
+            ->with(new Rules\Optional($key, $default));
+
+        return array_reduce($keys, $reducer, $instance)->rule(...$rules);
     }
 
     /**
@@ -28,57 +48,60 @@ final class ArrayKey
         $this->rules = $rules;
     }
 
-    public function int(callable ...$rules): self
+    public function int(...$rules): self
     {
-        return $this->rule(new Rules\IsInt, ...$rules);
+        return $this->with(new Rules\IsInt)->rule(...$rules);
     }
 
-    public function float(callable ...$rules): self
+    public function float(...$rules): self
     {
-        return $this->rule(new Rules\IsFloat, ...$rules);
+        return $this->with(new Rules\IsFloat)->rule(...$rules);
     }
 
-    public function string(callable ...$rules): self
+    public function string(...$rules): self
     {
-        return $this->rule(new Rules\IsString, ...$rules);
+        return $this->with(new Rules\IsString)->rule(...$rules);
     }
 
-    public function array(callable ...$rules): self
+    public function array(...$rules): self
     {
-        return $this->rule(new Rules\IsArray, ...$rules);
-    }
-
-    public function key(string $key, callable ...$rules): self
-    {
-        return $this->rule(new Rules\IsArray, new Rules\Required($key), ...$rules);
+        return $this->with(new Rules\IsArray)->rule(...$rules);
     }
 
     public function factory(callable $f): self
     {
-        return $this->rule(new Rules\Wrapper($f));
-    }
-
-    public function to(string $class): self
-    {
-        $f = [$class, 'from'];
-
-        if (is_callable($f)) {
-            return $this->factory($f);
-        }
-
-        throw new \InvalidArgumentException(sprintf('[%s, \'from\'] must be a callable', $class));
+        return $this->with(new Rules\Wrapper($f));
     }
 
     /**
-     * @param callable(mixed): \Quanta\Validation\Result ...$rules
+     * @param string|callable(mixed): \Quanta\Validation\Result ...$rules
      */
-    public function rule(callable ...$rules): self
+    public function rule(...$rules): self
     {
         if (count($rules) == 0) return $this;
 
-        $rule = Result::bind(array_shift($rules));
+        $rule = array_shift($rules);
 
-        return (new self(...$this->rules, ...[$rule]))->rule(...$rules);
+        if (is_string($rule)) {
+            if (is_callable([$rule, 'from'])) {
+                return $this->factory([$rule, 'from'])->rule(...$rules);
+            }
+
+            throw new \InvalidArgumentException(sprintf('[%s, \'from\'] is not a callable', $rule));
+        }
+
+        if (is_callable($rule)) {
+            return $this->with($rule)->rule(...$rules);
+        }
+
+        throw new \InvalidArgumentException(
+            'Rule must be either a callable or the name of a class with a static \'from\' method',
+        );
+    }
+
+    private function with(callable $rule): self
+    {
+        return new self(...$this->rules, ...[Result::bind($rule)]);
     }
 
     /**
@@ -86,6 +109,9 @@ final class ArrayKey
      */
     public function __invoke(array $data): Result
     {
-        return array_reduce($this->rules, fn ($result, $rule) => $rule($result), Result::unit($data));
+        $init = Result::unit($data);
+        $reducer = fn ($result, $rule) => $rule($result);
+
+        return array_reduce($this->rules, $reducer, $init);
     }
 }
