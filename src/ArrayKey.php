@@ -8,7 +8,7 @@ use Quanta\Validation\Rules;
 
 final class ArrayKey
 {
-    public static function required(string $key, callable ...$rules): self
+    public static function required(string $key, ...$rules): self
     {
         $keys = explode('.', $key);
 
