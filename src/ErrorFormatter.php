@@ -6,7 +6,7 @@ namespace Quanta\Validation;
 
 final class ErrorFormatter implements ErrorFormatterInterface
 {
-    public function __invoke(ErrorInterface $error): string
+    public function __invoke(Error $error): string
     {
         $keys = $error->keys();
         $default = $error->default();

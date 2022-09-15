@@ -51,13 +51,13 @@ final class Result
      */
     public static function error(string $label, string $default, ...$params): self
     {
-        return self::errors(new Error($label, $default, ...$params));
+        return self::errors(Error::from($label, $default, ...$params));
     }
 
     /**
      * Return an error result containing the given errors.
      */
-    public static function errors(ErrorInterface $error, ErrorInterface ...$errors): self
+    public static function errors(Error $error, Error ...$errors): self
     {
         return new self(self::ERROR, null, [$error, ...$errors]);
     }
@@ -133,7 +133,7 @@ final class Result
     /**
      * @param int                                   $status
      * @param mixed                                 $value
-     * @param \Quanta\Validation\ErrorInterface[]   $errors
+     * @param \Quanta\Validation\Error[]   $errors
      * @param boolean                               $final
      * @param string                                ...$keys
      */
@@ -174,7 +174,7 @@ final class Result
         }
 
         if ($this->status == self::ERROR) {
-            $errors = array_map(fn ($error) => new NestedError($error, ...$keys), $this->errors);
+            $errors = array_map(fn ($error) => $error->nest(...$keys), $this->errors);
 
             return self::errors(...$errors);
         }

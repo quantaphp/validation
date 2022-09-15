@@ -7,11 +7,11 @@ namespace Quanta\Validation;
 final class InvalidDataException extends \DomainException
 {
     /**
-     * @var \Quanta\Validation\ErrorInterface[]
+     * @var \Quanta\Validation\Error[]
      */
     public array $errors;
 
-    public function __construct(ErrorInterface $error, ErrorInterface ...$errors)
+    public function __construct(Error $error, Error ...$errors)
     {
         $this->errors = [$error, ...$errors];
 
