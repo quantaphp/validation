@@ -124,7 +124,19 @@ final class Result
                 return $result;
             }
 
-            return $f($result->value)->nest(...$result->keys);
+            $value = $f($result->value);
+
+            if (!$value instanceof self) {
+                throw new \UnexpectedValueException(
+                    sprintf('Rule must return an instance of %s, %s returned', self::class, gettype($value))
+                );
+            }
+
+            if ($value->status == self::ERROR) {
+                return $value->nest(...$result->keys);
+            }
+
+            return $value;
         };
     }
 
@@ -162,6 +174,18 @@ final class Result
         }
 
         return $this->value;
+    }
+
+    /**
+     * Dont treat the result as default value anymore.
+     */
+    public function undefault(): self
+    {
+        if ($this->status == self::SUCCESS && $this->final) {
+            return self::success($this->value);
+        }
+
+        return $this;
     }
 
     /**
