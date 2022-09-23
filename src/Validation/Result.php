@@ -48,7 +48,7 @@ final class Result
      *
      * @param mixed[] $params
      */
-    public static function error(string $label, string $default, array $params, string ...$keys): self
+    public static function error(string $label, string $default, array $params = [], string ...$keys): self
     {
         return self::errors(new Error($label, $default, $params, ...$keys));
     }

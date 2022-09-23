@@ -22,7 +22,8 @@
         "sort-packages": true
     },
     "require-dev": {
-        "phpstan/phpstan": "^1.8"
+        "phpstan/phpstan": "^1.8",
+        "phpunit/phpunit": "^9.5"
     },
     "autoload": {
         "psr-4": {
