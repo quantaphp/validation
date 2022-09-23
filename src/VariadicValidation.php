@@ -8,34 +8,36 @@ use Quanta\Validation\Result;
 
 final class VariadicValidation implements ValidationInterface
 {
-    private ValidationInterface $validation;
+    public static function from(ValidationInterface $validation, callable ...$rules): self
+    {
+        return new self(Result::variadic($validation), ...$rules);
+    }
 
-    public function __construct(ValidationInterface $validation)
+    /**
+     * @var callable(Result, Result): Result
+     */
+    private $validation;
+
+    /**
+     * @var array<callable(Result): Result>
+     */
+    private array $rules;
+
+    private function __construct(callable $validation, callable ...$rules)
     {
         $this->validation = $validation;
+        $this->rules = $rules;
     }
 
-    public function __invoke(Result $factory, $data): Result
+    public function __invoke(Result $factory, Result $input): Result
     {
-        if (!is_array($data)) {
-            throw new \InvalidArgumentException(
-                sprintf(
-                    '%s::__invoke(): Argument #2 ($data) must be of type array, %s given',
-                    self::class,
-                    gettype($data),
-                ),
-            );
-        }
+        $input = array_reduce($this->rules, [$this, 'reducer'], $input);
 
-        foreach ($data as $key => $value) {
-            $factory = $this->bound($factory)(Result::unit($value)->nest((string) $key));
-        }
-
-        return $factory;
+        return ($this->validation)($factory, $input);
     }
 
-    private function bound(Result $factory): callable
+    private function reducer(Result $input, callable $rule): Result
     {
-        return Result::bind(fn ($value) => ($this->validation)($factory, $value));
+        return $rule($input);
     }
 }

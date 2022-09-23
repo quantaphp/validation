@@ -8,5 +8,5 @@ use Quanta\Validation\Result;
 
 interface ValidationInterface
 {
-    public function __invoke(Result $factory, $data): Result;
+    public function __invoke(Result $factory, Result $input): Result;
 }

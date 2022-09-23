@@ -8,18 +8,22 @@ final class Error
 {
     private string $label;
 
-    private array $keys;
-
     private string $default;
 
+    /**
+     * @var mixed[]
+     */
     private array $params;
 
-    public static function from(string $label, string $default, ...$params): self
-    {
-        return new self($label, $default, $params);
-    }
+    /**
+     * @var string[]
+     */
+    private array $keys;
 
-    private function __construct(string $label, string $default, array $params, string ...$keys)
+    /**
+     * @param mixed[] $params
+     */
+    public function __construct(string $label, string $default, array $params = [], string ...$keys)
     {
         $this->label = $label;
         $this->default = $default;
@@ -32,19 +36,25 @@ final class Error
         return $this->label;
     }
 
-    public function keys(): array
-    {
-        return $this->keys;
-    }
-
     public function default(): string
     {
         return $this->default;
     }
 
+    /**
+     * @return mixed[]
+     */
     public function params(): array
     {
         return $this->params;
+    }
+
+    /**
+     * @return string[]
+     */
+    public function keys(): array
+    {
+        return $this->keys;
     }
 
     public function nest(string ...$keys): self

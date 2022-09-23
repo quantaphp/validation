@@ -7,7 +7,7 @@ namespace Quanta\Validation;
 final class InvalidDataException extends \DomainException
 {
     /**
-     * @var \Quanta\Validation\Error[]
+     * @var Error[]
      */
     public array $errors;
 

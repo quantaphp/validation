@@ -7,11 +7,22 @@ use Quanta\Validation\InvalidDataException;
 
 final class PositiveInteger
 {
-    public function __construct(public readonly int $value)
+    private int $value;
+
+    public function __construct(int $value)
     {
         if ($value < 0) {
-            throw new InvalidDataException(Error::from(self::class, '{key} must be positive'));
+            throw new InvalidDataException(
+                new Error(self::class, '{key} must be positive, %s given', ['found' => $value])
+            );
         }
+
+        $this->value = $value;
+    }
+
+    public function value(): int
+    {
+        return $this->value;
     }
 
     public function __toString()

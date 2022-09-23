@@ -8,10 +8,13 @@ use Quanta\Validation\Result;
 
 final class IsArray
 {
-    public function __invoke(mixed $value): Result
+    /**
+     * @param mixed $value
+     */
+    public function __invoke($value): Result
     {
         return is_array($value)
             ? Result::success($value)
-            : Result::error(self::class, '{key} must be an array, %s given', gettype($value));
+            : Result::error(self::class, '{key} must be an array, %s given', ['found' => gettype($value)]);
     }
 }

@@ -8,8 +8,17 @@ use Quanta\Validation\Result;
 
 final class Optional
 {
-    public function __construct(private string $key, private mixed $default)
+    private string $key;
+
+    /**
+     * @var mixed
+     */
+    private $default;
+
+    public function __construct(string $key, mixed $default)
     {
+        $this->key = $key;
+        $this->default = $default;
     }
 
     /**
@@ -17,10 +26,8 @@ final class Optional
      */
     public function __invoke(array $data): Result
     {
-        $result = array_key_exists($this->key, $data)
-            ? Result::success($data[$this->key])
-            : Result::final($this->default);
-
-        return $result->nest($this->key);
+        return array_key_exists($this->key, $data)
+            ? Result::success($data[$this->key], false, $this->key)
+            : Result::success($this->default, true, $this->key);
     }
 }

@@ -9,6 +9,9 @@ use Quanta\Validation\InvalidDataException;
 
 final class Wrapper
 {
+    /**
+     * @var callable
+     */
     private $f;
 
     public function __construct(callable $f)
@@ -16,6 +19,9 @@ final class Wrapper
         $this->f = $f;
     }
 
+    /**
+     * @param mixed ...$xs
+     */
     public function __invoke(...$xs): Result
     {
         try {

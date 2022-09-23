@@ -8,8 +8,11 @@ use Quanta\Validation\Result;
 
 final class Required
 {
-    public function __construct(private string $key)
+    private string $key;
+
+    public function __construct(string $key)
     {
+        $this->key = $key;
     }
 
     /**
@@ -17,10 +20,8 @@ final class Required
      */
     public function __invoke(array $data): Result
     {
-        $result = array_key_exists($this->key, $data)
-            ? Result::success($data[$this->key])
-            : Result::error(self::class, '{key} is required');
-
-        return $result->nest($this->key);
+        return array_key_exists($this->key, $data)
+            ? Result::success($data[$this->key], false, $this->key)
+            : Result::error(self::class, '{key} is required', [], $this->key);
     }
 }

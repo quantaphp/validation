@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Quanta\Validation;
 
+use Quanta\ValidationInterface;
+
 final class Result
 {
     const SUCCESS = 1;
@@ -12,15 +14,15 @@ final class Result
     /**
      * Return a successful result containing the given value.
      *
-     * Unit sounds better for wrapping an initial value.
+     * @param mixed $value
      */
-    public static function unit(mixed $value): self
+    public static function unit($value): self
     {
         return self::success($value);
     }
 
     /**
-     * Return a function that can be applied.
+     * Return a result containing a pure function that can be applied.
      */
     public static function pure(callable $f): self
     {
@@ -31,27 +33,24 @@ final class Result
      * Alias of unit.
      *
      * Success sounds better for functions returning either success or error.
+     *
+     * Also allows to set the value as default and to set the nesting level.
+     *
+     * @param mixed $value
      */
-    public static function success(mixed $value): self
+    public static function success($value, bool $final = false, string ...$keys): self
     {
-        return new self(self::SUCCESS, $value);
+        return new self(self::SUCCESS, $value, [], $final, ...$keys);
     }
 
     /**
-     * Return a successful result containing the given value and short-circuiting
-     * subsequent validations.
+     * Return an error result containing a single error from the given parameters.
+     *
+     * @param mixed[] $params
      */
-    public static function final(mixed $value): self
+    public static function error(string $label, string $default, array $params, string ...$keys): self
     {
-        return new self(self::SUCCESS, $value, [], true);
-    }
-
-    /**
-     * Return an error result creating a single error from the given template and variables.
-     */
-    public static function error(string $label, string $default, ...$params): self
-    {
-        return self::errors(Error::from($label, $default, ...$params));
+        return self::errors(new Error($label, $default, $params, ...$keys));
     }
 
     /**
@@ -68,102 +67,165 @@ final class Result
      * Make use of apply so errors are merged.
      *
      * (a -> b -> c -> ...) -> (Result<a> -> Rersult<b> -> Result<c> -> ...)
+     *
+     * @return callable(self ...$xs): self
      */
     public static function liftn(callable $f): callable
     {
         return function (self ...$xs) use ($f): self {
-            return array_reduce($xs, fn ($f, $x) => Result::apply($f)($x), Result::unit($f));
+            return array_reduce($xs, fn ($f, $x) => self::apply($f)($x), self::pure($f));
         };
     }
 
     /**
      * Turn the given result containing a function into a function taking one result as parameter.
      *
-     * (Result<a -> b -> c -> ...>) -> (Result<a> -> Rersult<b -> c -> ...>)
+     * Result<Pure<f>> -> (Result<a> -> Result<Pure<g>>)
+     * - where f = a -> b -> c -> d -> ...
+     * - where g = b -> c -> d -> ...
+     *
+     * @return callable(self): self
      */
-    public static function apply(Result $result): callable
+    public static function apply(self $f): callable
     {
-        if ($result->status == self::SUCCESS) {
-            if (!$result->value instanceof Pure) {
-                throw new \LogicException(
-                    sprintf('Apply can only be used on a Result containing an instance of %s', Pure::class)
-                );
-            }
-
-            return function (self $x) use ($result): self {
-                return match ($x->status) {
-                    self::SUCCESS => self::success($result->value->curry($x->value)),
-                    self::ERROR => $x,
-                };
+        if ($f->status == self::ERROR) {
+            return function (self $x) use ($f): self {
+                return $x->status == self::ERROR
+                    ? self::errors(...$f->errors, ...$x->errors)
+                    : $f;
             };
         }
 
-        return function (self $x) use ($result): self {
-            return match ($x->status) {
-                self::SUCCESS => $result,
-                self::ERROR => self::errors(...$result->errors, ...$x->errors),
-            };
+        if (!$f->value instanceof Pure) {
+            throw new \UnexpectedValueException(
+                sprintf(
+                    'Apply can only be used on a Result containing an instance of %s, %s found',
+                    Pure::class,
+                    gettype($f->value)
+                ),
+            );
+        }
+
+        return function (self $x) use ($f): self {
+            return $x->status == self::SUCCESS
+                ? self::success($f->value->curry($x->value))
+                : $x;
         };
     }
 
     /**
-     * Turn the given validation function into a composable validation function.
+     * Turn the given rule into a composable function.
      *
      * A Result is returned when the validation
      *
      * (a -> Result<b>) -> (Result<a> -> Result<b>)
+     *
+     * @return callable(self): self
      */
     public static function bind(callable $f): callable
     {
-        return function (self $result) use ($f): self {
-            if ($result->final) {
-                return $result;
+        return function (self $x) use ($f): self {
+            if ($x->final) {
+                return $x;
             }
 
-            if ($result->status == self::ERROR) {
-                return $result;
+            if ($x->status == self::ERROR) {
+                return $x;
             }
 
-            $value = $f($result->value);
+            $y = $f($x->value);
 
-            if (!$value instanceof self) {
+            if (!$y instanceof self) {
                 throw new \UnexpectedValueException(
-                    sprintf('Rule must return an instance of %s, %s returned', self::class, gettype($value))
+                    sprintf('Rule must return an instance of %s, %s returned', self::class, gettype($y))
                 );
             }
 
-            if ($value->status == self::ERROR) {
-                return $value->nest(...$result->keys);
+            if (count($x->keys) === 0) {
+                return $y;
             }
 
-            return $value;
+            return $y->status == self::SUCCESS
+                ? self::success($y->value, $y->final, ...$x->keys, ...$y->keys)
+                : self::errors(...array_map(fn ($e) => $e->nest(...$x->keys), $y->errors));
         };
     }
 
+    /**
+     * Turn the given validation function into a variadic validation function taking a Result<array> as parameter.
+     *
+     * ((Result<Pure<f>> -> Result<a>) -> Result<Pure<f>>) -> ((Result<Pure<f>> -> Result<a[]>) -> Result<Pure<f>>)
+     * - where f = a -> a -> a -> a -> ...
+     *
+     * @return callable(self, self): self
+     */
+    public static function variadic(ValidationInterface $validation): callable
+    {
+        return function (self $factory, self $result) use ($validation): self {
+            if ($result->status == self::ERROR) {
+                return $validation($factory, $result);
+            }
+
+            if (is_iterable($result->value)) {
+                foreach ($result->value as $key => $value) {
+                    $factory = $validation($factory, self::success($value, false, ...$result->keys, ...[(string) $key]));
+                }
+
+                return $factory;
+            }
+
+            throw new \UnexpectedValueException(
+                sprintf(
+                    'Variadic validation can only be used with a Result containing an iterable, %s found',
+                    gettype($result->value)
+                )
+            );
+        };
+    }
+
+    /**
+     * @var int<1, 2>
+     */
+    private int $status;
+
+    /**
+     * @var mixed
+     */
+    private $value;
+
+    /**
+     * @var Error[]
+     */
+    private array $errors;
+
+    private bool $final;
+
+    /**
+     * @var string[]
+     */
     private array $keys;
 
     /**
-     * @param int                                   $status
-     * @param mixed                                 $value
-     * @param \Quanta\Validation\Error[]   $errors
-     * @param boolean                               $final
-     * @param string                                ...$keys
+     * @param int<1, 2> $status
+     * @param mixed     $value
+     * @param Error[]   $errors
      */
-    private function __construct(
-        private int $status,
-        private mixed $value,
-        private array $errors = [],
-        private bool $final = false,
-        string ...$keys,
-    ) {
+    private function __construct(int $status, $value, array $errors = [], bool $final = false, string ...$keys)
+    {
+        $this->status = $status;
+        $this->value = $value;
+        $this->errors = $errors;
+        $this->final = $final;
         $this->keys = $keys;
     }
 
     /**
      * Return the value of a successful Result or throw an InvalidDataException when the
      * result is an error.
+     *
+     * @return mixed
      */
-    public function value(): mixed
+    public function value()
     {
         if ($this->status == self::ERROR) {
             throw new InvalidDataException(...$this->errors);
@@ -174,42 +236,5 @@ final class Result
         }
 
         return $this->value;
-    }
-
-    /**
-     * Dont treat the result as default value anymore.
-     */
-    public function undefault(): self
-    {
-        if ($this->status == self::SUCCESS && $this->final) {
-            return self::success($this->value);
-        }
-
-        return $this;
-    }
-
-    /**
-     * When the result is an error, nest them within the given keys.
-     */
-    public function nest(string ...$keys): self
-    {
-        if (count($keys) == 0) {
-            return $this;
-        }
-
-        if ($this->status == self::ERROR) {
-            $errors = array_map(fn ($error) => $error->nest(...$keys), $this->errors);
-
-            return self::errors(...$errors);
-        }
-
-        return new self(
-            $this->status,
-            $this->value,
-            $this->errors,
-            $this->final,
-            ...$keys,
-            ...$this->keys,
-        );
     }
 }
