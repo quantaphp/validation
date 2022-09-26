@@ -168,7 +168,7 @@ final class Result
 
             if (is_iterable($result->value)) {
                 foreach ($result->value as $key => $value) {
-                    $factory = $validation($factory, self::success($value, false, ...$result->keys, ...[(string) $key]));
+                    $factory = $validation($factory, self::success($value, $result->final, ...$result->keys, ...[(string) $key]));
                 }
 
                 return $factory;

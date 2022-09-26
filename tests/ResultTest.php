@@ -59,16 +59,18 @@ final class ResultTest extends TestCase
     {
         $error1 = new Error('label1', 'default1', ['p11', 'p12', 'p13'], 'key11', 'key12', 'key13');
         $error2 = new Error('label2', 'default2', ['p21', 'p22', 'p23'], 'key21', 'key22', 'key23');
+        $error3 = new Error('label3', 'default3', ['p31', 'p32', 'p33'], 'key31', 'key32', 'key33');
 
-        $result = Result::errors($error1, $error2);
+        $result = Result::errors($error1, $error2, $error3);
 
         try {
             $result->value();
         } catch (InvalidDataException $e) {
-            [$test1, $test2] = $e->messages(new TestErrorFormatter);
+            [$test1, $test2, $test3] = $e->messages(new TestErrorFormatter);
 
             $this->assertEquals($test1, 'label1:default1:p11:p12:p13:key11:key12:key13');
             $this->assertEquals($test2, 'label2:default2:p21:p22:p23:key21:key22:key23');
+            $this->assertEquals($test3, 'label3:default3:p31:p32:p33:key31:key32:key33');
         }
     }
 
@@ -92,11 +94,11 @@ final class ResultTest extends TestCase
         $this->assertEquals($test2, Result::errors(
             new Error('label1', 'default1', ['p11', 'p12', 'p13'], 'e11', 'e12', 'e13'),
             new Error('label2', 'default2', ['p21', 'p22', 'p23'], 'e21', 'e22', 'e23'),
-            new Error('label3', 'default3', ['p31', 'p32', 'p33'], 'e31', 'e32', 'e33'),
+            new Error('label3', 'default3', ['p31', 'p32', 'p33'], 'e31', 'e32', 'e33')
         ));
     }
 
-    public function testApplyWorksAsExceptedForSuccess(): void
+    public function testApplyWorksAsExceptedForInstanceOfPure(): void
     {
         $f = Result::apply(Result::pure(fn (int ...$xs) => implode(':', $xs)));
 
@@ -251,25 +253,21 @@ final class ResultTest extends TestCase
 
     public function testVariadicWorksAsExpected(): void
     {
-        $rule = fn (int $value) => Result::success($value * 2);
+        $rule = fn (int $value) => $value > 0
+            ? Result::success($value * 2)
+            : Result::error('label', 'default', ['value' => $value], 'key1', 'key2', 'key3');
 
-        $f = Result::variadic(Validation::factory()->rules($rule));
+        $f = Result::variadic(Validation::factory()->rule($rule));
 
         $factory = Result::pure(fn (int ...$xs) => implode(':', $xs));
 
         $test1 = $f($factory, Result::success([1, 2, 3]))->value();
-
-        $test2 = $f($factory, Result::success(new ArrayIterator([1, 2, 3])))->value();
-
-        $test3 = $f($factory, Result::success(new class implements IteratorAggregate
-        {
-            public function getIterator(): Traversable
-            {
-                return new ArrayIterator([1, 2, 3]);
-            }
-        }))->value();
-
-        $test4 = $f($factory, Result::errors(
+        $test2 = $f($factory, Result::success($this->iterator([1, 2, 3])))->value();
+        $test3 = $f($factory, Result::success($this->iteratoragg([1, 2, 3])))->value();
+        $test4 = $f($factory, Result::success([1, -2, 3, -4, 5, -6]));
+        $test5 = $f($factory, Result::success($this->iterator([1, -2, 3, -4, 5, -6])));
+        $test6 = $f($factory, Result::success($this->iteratoragg([1, -2, 3, -4, 5, -6])));
+        $test7 = $f($factory, Result::errors(
             new Error('label1', 'default1', ['p11', 'p12', 'p13'], 'e11', 'e12', 'e13'),
             new Error('label2', 'default2', ['p21', 'p22', 'p23'], 'e21', 'e22', 'e23'),
             new Error('label3', 'default3', ['p31', 'p32', 'p33'], 'e31', 'e32', 'e33')
@@ -280,13 +278,31 @@ final class ResultTest extends TestCase
         $this->assertEquals($test3, '2:4:6');
 
         $this->assertEquals($test4, Result::errors(
+            new Error('label', 'default', ['value' => -2], '1', 'key1', 'key2', 'key3'),
+            new Error('label', 'default', ['value' => -4], '3', 'key1', 'key2', 'key3'),
+            new Error('label', 'default', ['value' => -6], '5', 'key1', 'key2', 'key3')
+        ));
+
+        $this->assertEquals($test5, Result::errors(
+            new Error('label', 'default', ['value' => -2], '1', 'key1', 'key2', 'key3'),
+            new Error('label', 'default', ['value' => -4], '3', 'key1', 'key2', 'key3'),
+            new Error('label', 'default', ['value' => -6], '5', 'key1', 'key2', 'key3')
+        ));
+
+        $this->assertEquals($test6, Result::errors(
+            new Error('label', 'default', ['value' => -2], '1', 'key1', 'key2', 'key3'),
+            new Error('label', 'default', ['value' => -4], '3', 'key1', 'key2', 'key3'),
+            new Error('label', 'default', ['value' => -6], '5', 'key1', 'key2', 'key3')
+        ));
+
+        $this->assertEquals($test7, Result::errors(
             new Error('label1', 'default1', ['p11', 'p12', 'p13'], 'e11', 'e12', 'e13'),
             new Error('label2', 'default2', ['p21', 'p22', 'p23'], 'e21', 'e22', 'e23'),
             new Error('label3', 'default3', ['p31', 'p32', 'p33'], 'e31', 'e32', 'e33')
         ));
     }
 
-    public function testVariadicThrowsWhenGivingTheResultingFunctionASuccessfulResultNotContainingAnIterable(): void
+    public function testVariadicThrowsWhenGivingTheResultingFunctionASuccessfulResultContainingANonIterableValue(): void
     {
         $f = Result::variadic(Validation::factory());
 
@@ -295,5 +311,28 @@ final class ResultTest extends TestCase
         $this->expectException(UnexpectedValueException::class);
 
         $f($factory, Result::success(1));
+    }
+
+    private function iterator(array $data): Iterator
+    {
+        return new ArrayIterator($data);
+    }
+
+    private function iteratorAgg(array $data): IteratorAggregate
+    {
+        return new class($data) implements IteratorAggregate
+        {
+            private $data;
+
+            public function __construct(array $data)
+            {
+                $this->data = $data;
+            }
+
+            public function getIterator(): Traversable
+            {
+                return new ArrayIterator($this->data);
+            }
+        };
     }
 }
