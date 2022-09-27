@@ -2,11 +2,12 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/TestErrorFormatter.php';
+require_once __DIR__ . '/TestCallable.php';
 
 use PHPUnit\Framework\TestCase;
 
 use Quanta\Validation;
+use Quanta\ValidationInterface;
 use Quanta\Validation\Pure;
 use Quanta\Validation\Error;
 use Quanta\Validation\Result;
@@ -21,7 +22,9 @@ final class ResultTest extends TestCase
 
     public function testPureAliasesSuccessWithWrappedFunction(): void
     {
-        $this->assertEquals(Result::pure($f = fn () => 1), Result::success(new Pure($f)));
+        $f = fn () => 1;
+
+        $this->assertEquals(Result::pure($f), Result::success(new Pure($f)));
     }
 
     public function testErrorAliasesErrors(): void
@@ -57,97 +60,91 @@ final class ResultTest extends TestCase
 
     public function testErrorResultThrowsInvalidDataException(): void
     {
-        $error1 = new Error('label1', 'default1', ['p11', 'p12', 'p13'], 'key11', 'key12', 'key13');
-        $error2 = new Error('label2', 'default2', ['p21', 'p22', 'p23'], 'key21', 'key22', 'key23');
-        $error3 = new Error('label3', 'default3', ['p31', 'p32', 'p33'], 'key31', 'key32', 'key33');
+        $error1 = new Error('label1', 'default1');
+        $error2 = new Error('label2', 'default2');
+        $error3 = new Error('label3', 'default3');
 
         $result = Result::errors($error1, $error2, $error3);
 
         try {
             $result->value();
         } catch (InvalidDataException $e) {
-            [$test1, $test2, $test3] = $e->messages(new TestErrorFormatter);
-
-            $this->assertEquals($test1, 'label1:default1:p11:p12:p13:key11:key12:key13');
-            $this->assertEquals($test2, 'label2:default2:p21:p22:p23:key21:key22:key23');
-            $this->assertEquals($test3, 'label3:default3:p31:p32:p33:key31:key32:key33');
+            $this->assertEquals($e, new InvalidDataException($error1, $error2, $error3));
         }
     }
 
-    public function testLiftnWorksAsExpected(): void
+    public function testLiftnWorks(): void
     {
-        $f = Result::liftn(fn (int ...$xs) => implode(':', $xs));
+        $factory = $this->createMock(TestCallable::class);
 
-        $test1 = $f(Result::success(1), Result::success(2), Result::success(3))->value();
+        $factory->expects($this->once())->method('__invoke')->with(1, 2, 3)->willReturn('result');
 
-        $test2 = $f(
-            Result::error('label1', 'default1', ['p11', 'p12', 'p13'], 'e11', 'e12', 'e13'),
-            Result::success(2),
-            Result::errors(
-                new Error('label2', 'default2', ['p21', 'p22', 'p23'], 'e21', 'e22', 'e23'),
-                new Error('label3', 'default3', ['p31', 'p32', 'p33'], 'e31', 'e32', 'e33')
-            )
-        );
+        $error1 = new Error('label1', 'default1');
+        $error2 = new Error('label2', 'default2');
+        $error3 = new Error('label3', 'default3');
 
-        $this->assertEquals($test1, '1:2:3');
+        $lifted = Result::liftn($factory);
 
-        $this->assertEquals($test2, Result::errors(
-            new Error('label1', 'default1', ['p11', 'p12', 'p13'], 'e11', 'e12', 'e13'),
-            new Error('label2', 'default2', ['p21', 'p22', 'p23'], 'e21', 'e22', 'e23'),
-            new Error('label3', 'default3', ['p31', 'p32', 'p33'], 'e31', 'e32', 'e33')
-        ));
+        $test1 = $lifted(Result::success(1), Result::success(2), Result::success(3))->value();
+        $test2 = $lifted(Result::success(1), Result::errors($error1), Result::success(3), Result::errors($error2, $error3));
+
+        $this->assertEquals($test1, 'result');
+        $this->assertEquals($test2, Result::errors($error1, $error2, $error3));
     }
 
-    public function testApplyWorksAsExceptedForInstanceOfPure(): void
+    public function testApplyWorksForPure(): void
     {
-        $f = Result::apply(Result::pure(fn (int ...$xs) => implode(':', $xs)));
+        $factory = $this->createMock(TestCallable::class);
 
-        $test1 = $f(Result::success(1));
-        $test1 = Result::apply($test1)(Result::success(2));
-        $test1 = Result::apply($test1)(Result::success(3));
-        $test1 = $test1->value();
+        $factory->expects($this->once())->method('__invoke')->with(1, 2, 3)->willReturn('result');
 
-        $test2 = $f(Result::success(1));
-        $test2 = Result::apply($test2)(Result::error('label1', 'default1', ['p11', 'p12', 'p13'], 'e11', 'e12', 'e13'));
-        $test2 = Result::apply($test2)(Result::success(3));
-        $test2 = Result::apply($test2)(Result::errors(
-            new Error('label2', 'default2', ['p21', 'p22', 'p23'], 'e21', 'e22', 'e23'),
-            new Error('label3', 'default3', ['p31', 'p32', 'p33'], 'e31', 'e32', 'e33')
-        ));
+        $error1 = new Error('label1', 'default1');
+        $error2 = new Error('label2', 'default2');
+        $error3 = new Error('label3', 'default3');
 
-        $this->assertEquals($test1, '1:2:3');
+        $pure = Result::pure($factory);
 
-        $this->assertEquals($test2, Result::errors(
-            new Error('label1', 'default1', ['p11', 'p12', 'p13'], 'e11', 'e12', 'e13'),
-            new Error('label2', 'default2', ['p21', 'p22', 'p23'], 'e21', 'e22', 'e23'),
-            new Error('label3', 'default3', ['p31', 'p32', 'p33'], 'e31', 'e32', 'e33')
-        ));
+        $pure1 = Result::apply($pure)(Result::success(1));
+        $pure1 = Result::apply($pure1)(Result::success(2));
+        $pure1 = Result::apply($pure1)(Result::success(3));
+
+        $pure2 = Result::apply($pure)(Result::success(1));
+        $pure2 = Result::apply($pure2)(Result::errors($error1));
+        $pure2 = Result::apply($pure2)(Result::success(3));
+        $pure2 = Result::apply($pure2)(Result::errors($error2, $error3));
+
+        $test1 = $pure1->value();
+        $test2 = $pure2;
+
+        $this->assertEquals($test1, 'result');
+        $this->assertEquals($test2, Result::errors($error1, $error2, $error3));
     }
 
-    public function testApplyWorksAsExceptedForError(): void
+    public function testApplyWorksForError(): void
     {
-        $f = Result::apply(Result::error('label1', 'default1', ['p11', 'p12', 'p13'], 'e11', 'e12', 'e13'));
+        $factory = $this->createMock(TestCallable::class);
 
-        $test1 = $f(Result::success(1));
-        $test1 = Result::apply($test1)(Result::success(2));
-        $test1 = Result::apply($test1)(Result::success(3));
+        $factory->expects($this->never())->method('__invoke');
 
-        $test2 = $f(Result::success(1));
-        $test2 = Result::apply($test2)(Result::error('label2', 'default2', ['p21', 'p22', 'p23'], 'e21', 'e22', 'e23'));
-        $test2 = Result::apply($test2)(Result::success(3));
-        $test2 = Result::apply($test2)(Result::errors(
-            new Error('label3', 'default3', ['p31', 'p32', 'p33'], 'e31', 'e32', 'e33'),
-            new Error('label4', 'default4', ['p41', 'p42', 'p43'], 'e41', 'e42', 'e43')
-        ));
+        $error1 = new Error('label1', 'default1');
+        $error2 = new Error('label2', 'default2');
+        $error3 = new Error('label3', 'default3');
 
-        $this->assertEquals($test1, Result::error('label1', 'default1', ['p11', 'p12', 'p13'], 'e11', 'e12', 'e13'));
+        $pure = Result::errors($error1);
 
-        $this->assertEquals($test2, Result::errors(
-            new Error('label1', 'default1', ['p11', 'p12', 'p13'], 'e11', 'e12', 'e13'),
-            new Error('label2', 'default2', ['p21', 'p22', 'p23'], 'e21', 'e22', 'e23'),
-            new Error('label3', 'default3', ['p31', 'p32', 'p33'], 'e31', 'e32', 'e33'),
-            new Error('label4', 'default4', ['p41', 'p42', 'p43'], 'e41', 'e42', 'e43')
-        ));
+        $pure1 = Result::apply($pure)(Result::success(1));
+        $pure1 = Result::apply($pure1)(Result::success(2));
+        $pure1 = Result::apply($pure1)(Result::success(3));
+
+        $pure2 = Result::apply($pure)(Result::errors($error2));
+        $pure2 = Result::apply($pure2)(Result::success(2));
+        $pure2 = Result::apply($pure2)(Result::errors($error3));
+
+        $test1 = $pure1;
+        $test2 = $pure2;
+
+        $this->assertEquals($test1, Result::errors($error1));
+        $this->assertEquals($test2, Result::errors($error1, $error2, $error3));
     }
 
     public function testApplyThrowsForSuccessNotContainingAnInstanceOfPure(): void
@@ -159,7 +156,14 @@ final class ResultTest extends TestCase
 
     public function testBindWorksAsExpectedForFunctionReturningSuccess(): void
     {
-        $f = Result::bind(fn (int $value) => Result::success($value * 2));
+        $rule = $this->createMock(TestCallable::class);
+
+        $rule->expects($this->exactly(2))
+            ->method('__invoke')
+            ->with(1)
+            ->willReturn(Result::success('result'));
+
+        $f = Result::bind($rule);
 
         $test1 = $f(Result::success(1));
         $test2 = $f(Result::success(1, false, 'a1', 'a2', 'a3'));
@@ -167,8 +171,8 @@ final class ResultTest extends TestCase
         $test4 = $f(Result::success(1, true, 'a1', 'a2', 'a3'));
         $test5 = $f(Result::error('label', 'default', ['p1', 'p2', 'p3'], 'e1', 'e2', 'e3'));
 
-        $this->assertEquals($test1, Result::success(2));
-        $this->assertEquals($test2, Result::success(2, false, 'a1', 'a2', 'a3'));
+        $this->assertEquals($test1, Result::success('result'));
+        $this->assertEquals($test2, Result::success('result', false, 'a1', 'a2', 'a3'));
         $this->assertEquals($test3, Result::success(1, true));
         $this->assertEquals($test4, Result::success(1, true, 'a1', 'a2', 'a3'));
         $this->assertEquals($test5, Result::error('label', 'default', ['p1', 'p2', 'p3'], 'e1', 'e2', 'e3'));
@@ -176,7 +180,14 @@ final class ResultTest extends TestCase
 
     public function testBindWorksAsExpectedForFunctionReturningNestedSuccess(): void
     {
-        $f = Result::bind(fn (int $value) => Result::success($value * 2, false, 'b1', 'b2', 'b3'));
+        $rule = $this->createMock(TestCallable::class);
+
+        $rule->expects($this->exactly(2))
+            ->method('__invoke')
+            ->with(1)
+            ->willReturn(Result::success('result', false, 'b1', 'b2', 'b3'));
+
+        $f = Result::bind($rule);
 
         $test1 = $f(Result::success(1));
         $test2 = $f(Result::success(1, false, 'a1', 'a2', 'a3'));
@@ -184,8 +195,8 @@ final class ResultTest extends TestCase
         $test4 = $f(Result::success(1, true, 'a1', 'a2', 'a3'));
         $test5 = $f(Result::error('label', 'default', ['p1', 'p2', 'p3'], 'e1', 'e2', 'e3'));
 
-        $this->assertEquals($test1, Result::success(2, false, 'b1', 'b2', 'b3'));
-        $this->assertEquals($test2, Result::success(2, false, 'a1', 'a2', 'a3', 'b1', 'b2', 'b3'));
+        $this->assertEquals($test1, Result::success('result', false, 'b1', 'b2', 'b3'));
+        $this->assertEquals($test2, Result::success('result', false, 'a1', 'a2', 'a3', 'b1', 'b2', 'b3'));
         $this->assertEquals($test3, Result::success(1, true));
         $this->assertEquals($test4, Result::success(1, true, 'a1', 'a2', 'a3'));
         $this->assertEquals($test5, Result::error('label', 'default', ['p1', 'p2', 'p3'], 'e1', 'e2', 'e3'));
@@ -193,7 +204,14 @@ final class ResultTest extends TestCase
 
     public function testBindWorksAsExpectedForFunctionReturningDefaultSuccess(): void
     {
-        $f = Result::bind(fn (int $value) => Result::success($value * 2, true));
+        $rule = $this->createMock(TestCallable::class);
+
+        $rule->expects($this->exactly(2))
+            ->method('__invoke')
+            ->with(1)
+            ->willReturn(Result::success('result', true));
+
+        $f = Result::bind($rule);
 
         $test1 = $f(Result::success(1));
         $test2 = $f(Result::success(1, false, 'a1', 'a2', 'a3'));
@@ -201,8 +219,8 @@ final class ResultTest extends TestCase
         $test4 = $f(Result::success(1, true, 'a1', 'a2', 'a3'));
         $test5 = $f(Result::error('label', 'default', ['p1', 'p2', 'p3'], 'e1', 'e2', 'e3'));
 
-        $this->assertEquals($test1, Result::success(2, true));
-        $this->assertEquals($test2, Result::success(2, true, 'a1', 'a2', 'a3'));
+        $this->assertEquals($test1, Result::success('result', true));
+        $this->assertEquals($test2, Result::success('result', true, 'a1', 'a2', 'a3'));
         $this->assertEquals($test3, Result::success(1, true));
         $this->assertEquals($test4, Result::success(1, true, 'a1', 'a2', 'a3'));
         $this->assertEquals($test5, Result::error('label', 'default', ['p1', 'p2', 'p3'], 'e1', 'e2', 'e3'));
@@ -210,7 +228,14 @@ final class ResultTest extends TestCase
 
     public function testBindWorksAsExpectedForFunctionReturningNestedDefaultSuccess(): void
     {
-        $f = Result::bind(fn (int $value) => Result::success($value * 2, true, 'b1', 'b2', 'b3'));
+        $rule = $this->createMock(TestCallable::class);
+
+        $rule->expects($this->exactly(2))
+            ->method('__invoke')
+            ->with(1)
+            ->willReturn(Result::success('result', true, 'b1', 'b2', 'b3'));
+
+        $f = Result::bind($rule);
 
         $test1 = $f(Result::success(1));
         $test2 = $f(Result::success(1, false, 'a1', 'a2', 'a3'));
@@ -218,8 +243,8 @@ final class ResultTest extends TestCase
         $test4 = $f(Result::success(1, true, 'a1', 'a2', 'a3'));
         $test5 = $f(Result::error('label', 'default', ['p1', 'p2', 'p3'], 'e1', 'e2', 'e3'));
 
-        $this->assertEquals($test1, Result::success(2, true, 'b1', 'b2', 'b3'));
-        $this->assertEquals($test2, Result::success(2, true, 'a1', 'a2', 'a3', 'b1', 'b2', 'b3'));
+        $this->assertEquals($test1, Result::success('result', true, 'b1', 'b2', 'b3'));
+        $this->assertEquals($test2, Result::success('result', true, 'a1', 'a2', 'a3', 'b1', 'b2', 'b3'));
         $this->assertEquals($test3, Result::success(1, true));
         $this->assertEquals($test4, Result::success(1, true, 'a1', 'a2', 'a3'));
         $this->assertEquals($test5, Result::error('label', 'default', ['p1', 'p2', 'p3'], 'e1', 'e2', 'e3'));
@@ -227,7 +252,14 @@ final class ResultTest extends TestCase
 
     public function testBindWorksAsExpectedForFunctionReturningError(): void
     {
-        $f = Result::bind(fn (int $value) => Result::error('label', 'default', ['value' => $value], 'c1', 'c2', 'c3'));
+        $rule = $this->createMock(TestCallable::class);
+
+        $rule->expects($this->exactly(2))
+            ->method('__invoke')
+            ->with(1)
+            ->willReturn(Result::error('label', 'default', ['q1', 'q2', 'q3'], 'c1', 'c2', 'c3'));
+
+        $f = Result::bind($rule);
 
         $test1 = $f(Result::success(1));
         $test3 = $f(Result::success(1, false, 'a1', 'a2', 'a3'));
@@ -235,8 +267,8 @@ final class ResultTest extends TestCase
         $test4 = $f(Result::success(1, true, 'a1', 'a2', 'a3'));
         $test5 = $f(Result::error('label', 'default', ['p1', 'p2', 'p3'], 'e1', 'e2', 'e3'));
 
-        $this->assertEquals($test1, Result::error('label', 'default', ['value' => 1], 'c1', 'c2', 'c3'));
-        $this->assertEquals($test3, Result::error('label', 'default', ['value' => 1], 'a1', 'a2', 'a3', 'c1', 'c2', 'c3'));
+        $this->assertEquals($test1, Result::error('label', 'default', ['q1', 'q2', 'q3'], 'c1', 'c2', 'c3'));
+        $this->assertEquals($test3, Result::error('label', 'default', ['q1', 'q2', 'q3'], 'a1', 'a2', 'a3', 'c1', 'c2', 'c3'));
         $this->assertEquals($test2, Result::success(1, true));
         $this->assertEquals($test4, Result::success(1, true, 'a1', 'a2', 'a3'));
         $this->assertEquals($test5, Result::error('label', 'default', ['p1', 'p2', 'p3'], 'e1', 'e2', 'e3'));
@@ -244,7 +276,14 @@ final class ResultTest extends TestCase
 
     public function testBindThrowsForCallablesNotReturningAResult(): void
     {
-        $f = Result::bind(fn (int $value) => $value * 2);
+        $rule = $this->createMock(TestCallable::class);
+
+        $rule->expects($this->exactly(1))
+            ->method('__invoke')
+            ->with(1)
+            ->willReturn(2);
+
+        $f = Result::bind($rule);
 
         $this->expectException(UnexpectedValueException::class);
 
@@ -253,64 +292,37 @@ final class ResultTest extends TestCase
 
     public function testVariadicWorksAsExpected(): void
     {
-        $rule = fn (int $value) => $value > 0
-            ? Result::success($value * 2)
-            : Result::error('label', 'default', ['value' => $value], 'key1', 'key2', 'key3');
+        $factory1 = Result::pure(fn () => 1);
+        $factory2 = Result::pure(fn () => 2);
+        $factory3 = Result::pure(fn () => 3);
+        $factory4 = Result::pure(fn () => 4);
 
-        $f = Result::variadic(Validation::factory()->rule($rule));
+        $validation = $this->createMock(ValidationInterface::class);
 
-        $factory = Result::pure(fn (int ...$xs) => implode(':', $xs));
+        $validation->expects($this->exactly(3))->method('__invoke')->willReturnMap([
+            [$factory1, Result::success(1, false, 'key1', 'key2', 'key3', '0'), $factory2],
+            [$factory2, Result::success(2, false, 'key1', 'key2', 'key3', '1'), $factory3],
+            [$factory3, Result::success(3, false, 'key1', 'key2', 'key3', '2'), $factory4],
+        ]);
 
-        $test1 = $f($factory, Result::success([1, 2, 3]))->value();
-        $test2 = $f($factory, Result::success($this->iterator([1, 2, 3])))->value();
-        $test3 = $f($factory, Result::success($this->iteratoragg([1, 2, 3])))->value();
-        $test4 = $f($factory, Result::success([1, -2, 3, -4, 5, -6]));
-        $test5 = $f($factory, Result::success($this->iterator([1, -2, 3, -4, 5, -6])));
-        $test6 = $f($factory, Result::success($this->iteratoragg([1, -2, 3, -4, 5, -6])));
-        $test7 = $f($factory, Result::errors(
-            new Error('label1', 'default1', ['p11', 'p12', 'p13'], 'e11', 'e12', 'e13'),
-            new Error('label2', 'default2', ['p21', 'p22', 'p23'], 'e21', 'e22', 'e23'),
-            new Error('label3', 'default3', ['p31', 'p32', 'p33'], 'e31', 'e32', 'e33')
-        ));
+        $variadic = Result::variadic($validation);
 
-        $this->assertEquals($test1, '2:4:6');
-        $this->assertEquals($test2, '2:4:6');
-        $this->assertEquals($test3, '2:4:6');
+        $test = $variadic($factory1, Result::success([1, 2, 3], false, 'key1', 'key2', 'key3'));
 
-        $this->assertEquals($test4, Result::errors(
-            new Error('label', 'default', ['value' => -2], '1', 'key1', 'key2', 'key3'),
-            new Error('label', 'default', ['value' => -4], '3', 'key1', 'key2', 'key3'),
-            new Error('label', 'default', ['value' => -6], '5', 'key1', 'key2', 'key3')
-        ));
-
-        $this->assertEquals($test5, Result::errors(
-            new Error('label', 'default', ['value' => -2], '1', 'key1', 'key2', 'key3'),
-            new Error('label', 'default', ['value' => -4], '3', 'key1', 'key2', 'key3'),
-            new Error('label', 'default', ['value' => -6], '5', 'key1', 'key2', 'key3')
-        ));
-
-        $this->assertEquals($test6, Result::errors(
-            new Error('label', 'default', ['value' => -2], '1', 'key1', 'key2', 'key3'),
-            new Error('label', 'default', ['value' => -4], '3', 'key1', 'key2', 'key3'),
-            new Error('label', 'default', ['value' => -6], '5', 'key1', 'key2', 'key3')
-        ));
-
-        $this->assertEquals($test7, Result::errors(
-            new Error('label1', 'default1', ['p11', 'p12', 'p13'], 'e11', 'e12', 'e13'),
-            new Error('label2', 'default2', ['p21', 'p22', 'p23'], 'e21', 'e22', 'e23'),
-            new Error('label3', 'default3', ['p31', 'p32', 'p33'], 'e31', 'e32', 'e33')
-        ));
+        $this->assertSame($test, $factory4);
     }
 
-    public function testVariadicThrowsWhenGivingTheResultingFunctionASuccessfulResultContainingANonIterableValue(): void
+    public function testFunctionReturnedByVariadicThrowsForSuccessContainingANonIterableValue(): void
     {
-        $f = Result::variadic(Validation::factory());
+        $validation = $this->createMock(ValidationInterface::class);
 
-        $factory = Result::pure(fn (int ...$xs) => implode(':', $xs));
+        $validation->expects($this->never())->method('__invoke');
+
+        $variadic = Result::variadic($validation);
 
         $this->expectException(UnexpectedValueException::class);
 
-        $f($factory, Result::success(1));
+        $variadic(Result::pure(fn () => 1), Result::success(1));
     }
 
     private function iterator(array $data): Iterator

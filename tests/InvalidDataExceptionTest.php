@@ -2,12 +2,11 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/TestErrorFormatter.php';
-
 use PHPUnit\Framework\TestCase;
 
 use Quanta\Validation\Error;
 use Quanta\Validation\ErrorFormatter;
+use Quanta\Validation\ErrorFormatterInterface;
 use Quanta\Validation\InvalidDataException;
 
 final class InvalidDataExceptionTest extends TestCase
@@ -40,18 +39,26 @@ final class InvalidDataExceptionTest extends TestCase
         $this->assertEquals($test4, $formatter($error4));
     }
 
-    public function testUsesGivenErrorFormatter(): void
+    public function testUsesTheGivenErrorFormatter(): void
     {
-        $error1 = new Error('label1', 'default1', ['a1', 'b1', 'c1'], 'key11', 'key12', 'key13');
-        $error2 = new Error('label2', 'default2', ['a2', 'b2', 'c2'], 'key21', 'key22', 'key23');
+        $error1 = new Error('label1', 'default1');
+        $error2 = new Error('label2', 'default2');
+        $error3 = new Error('label3', 'default3');
 
-        $formatter = new TestErrorFormatter;
+        $formatter = $this->createMock(ErrorFormatterInterface::class);
 
-        $exception = new InvalidDataException($error1, $error2);
+        $formatter->expects($this->exactly(3))->method('__invoke')->willReturnMap([
+            [$error1, 'error1'],
+            [$error2, 'error2'],
+            [$error3, 'error3'],
+        ]);
 
-        [$test1, $test2] = $exception->messages($formatter);
+        $exception = new InvalidDataException($error1, $error2, $error3);
 
-        $this->assertEquals($test1, $formatter($error1));
-        $this->assertEquals($test2, $formatter($error2));
+        [$test1, $test2, $test3] = $exception->messages($formatter);
+
+        $this->assertEquals($test1, 'error1');
+        $this->assertEquals($test2, 'error2');
+        $this->assertEquals($test3, 'error3');
     }
 }

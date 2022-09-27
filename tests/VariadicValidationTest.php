@@ -2,8 +2,6 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/TestErrorFormatter.php';
-
 use PHPUnit\Framework\TestCase;
 
 use Quanta\Validation;

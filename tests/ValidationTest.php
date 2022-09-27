@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/TestErrorFormatter.php';
+require_once __DIR__ . '/TestCallable.php';
 
 use PHPUnit\Framework\TestCase;
 
@@ -11,11 +11,13 @@ use Quanta\VariadicValidation;
 use Quanta\ValidationInterface;
 use Quanta\Validation\Rules;
 use Quanta\Validation\Types;
+use Quanta\Validation\Error;
 use Quanta\Validation\Result;
-use Quanta\Validation\InvalidDataException;
 
 final class TestClass
 {
+    public $value;
+
     public function __construct($value)
     {
         $this->value = $value;
@@ -36,15 +38,142 @@ final class ValidationTest extends TestCase
 
     public function testFactoryReturnsAnEmptyInstance(): void
     {
-        $x = new class
-        {
-        };
+        $factory = $this->createMock(TestCallable::class);
 
-        $factory = Result::pure(fn (object $test) => $this->assertSame($test, $x));
+        $factory->expects($this->once())->method('__invoke')->with(1)->willReturn('result');
 
         $validation = Validation::factory();
 
-        $validation($factory, Result::success($x))->value();
+        $test = $validation(Result::pure($factory), Result::success(1))->value();
+
+        $this->assertEquals($test, 'result');
+    }
+
+    public function testItComposeRulesReturningSuccess(): void
+    {
+        $rule1 = $this->createMock(TestCallable::class);
+        $rule2 = $this->createMock(TestCallable::class);
+        $rule3 = $this->createMock(TestCallable::class);
+
+        $factory = $this->createMock(TestCallable::class);
+
+        $rule1->expects($this->once())->method('__invoke')->with(1)->willReturn(Result::success(2));
+        $rule2->expects($this->once())->method('__invoke')->with(2)->willReturn(Result::success(3));
+        $rule3->expects($this->once())->method('__invoke')->with(3)->willReturn(Result::success(4));
+
+        $factory->expects($this->once())->method('__invoke')->with(4)->willReturn('result');
+
+        $validation = Validation::factory()->rule($rule1, $rule2, $rule3);
+
+        $test = $validation(Result::pure($factory), Result::success(1))->value();
+
+        $this->assertEquals($test, 'result');
+    }
+
+    public function testItShortcutValidationWhenARuleReturnsAnError(): void
+    {
+        $rule1 = $this->createMock(TestCallable::class);
+        $rule2 = $this->createMock(TestCallable::class);
+        $rule3 = $this->createMock(TestCallable::class);
+
+        $factory = $this->createMock(TestCallable::class);
+
+        $error = new Error('label', 'default');
+
+        $rule1->expects($this->once())->method('__invoke')->with(1)->willReturn(Result::success(2));
+        $rule2->expects($this->once())->method('__invoke')->with(2)->willReturn(Result::errors($error));
+        $rule3->expects($this->never())->method('__invoke');
+
+        $factory->expects($this->never())->method('__invoke');
+
+        $validation = Validation::factory()->rule($rule1, $rule2, $rule3);
+
+        $test = $validation(Result::pure($factory), Result::success(1));
+
+        $this->assertEquals($test, Result::errors($error));
+    }
+
+    public function testItAccumulatesSuccessAsFactoryParameters(): void
+    {
+        $rule1 = $this->createMock(TestCallable::class);
+        $rule2 = $this->createMock(TestCallable::class);
+        $rule3 = $this->createMock(TestCallable::class);
+
+        $factory = $this->createMock(TestCallable::class);
+
+        $rule1->expects($this->exactly(3))->method('__invoke')->willReturnMap([
+            [11, Result::success(12)],
+            [21, Result::success(22)],
+            [31, Result::success(32)],
+        ]);
+
+        $rule2->expects($this->exactly(3))->method('__invoke')->willReturnMap([
+            [12, Result::success(13)],
+            [22, Result::success(23)],
+            [32, Result::success(33)],
+        ]);
+
+        $rule3->expects($this->exactly(3))->method('__invoke')->willReturnMap([
+            [13, Result::success(14)],
+            [23, Result::success(24)],
+            [33, Result::success(34)],
+        ]);
+
+        $factory->expects($this->once())->method('__invoke')->with(14, 24, 34)->willReturn('result');
+
+        $validation = Validation::factory()->rule($rule1, $rule2, $rule3);
+
+        $pure = Result::pure($factory);
+
+        $pure = $validation($pure, Result::success(11));
+        $pure = $validation($pure, Result::success(21));
+        $pure = $validation($pure, Result::success(31));
+
+        $test = $pure->value();
+
+        $this->assertEquals($test, 'result');
+    }
+
+    public function testItAccumulatesErrors(): void
+    {
+        $error1 = new Error('label1', 'default1');
+        $error2 = new Error('label2', 'default2');
+        $error3 = new Error('label3', 'default3');
+
+        $rule1 = $this->createMock(TestCallable::class);
+        $rule2 = $this->createMock(TestCallable::class);
+        $rule3 = $this->createMock(TestCallable::class);
+
+        $factory = $this->createMock(TestCallable::class);
+
+        $rule1->expects($this->exactly(3))->method('__invoke')->willReturnMap([
+            [11, Result::errors($error1)],
+            [21, Result::success(22)],
+            [31, Result::success(32)],
+        ]);
+
+        $rule2->expects($this->exactly(2))->method('__invoke')->willReturnMap([
+            [22, Result::errors($error2)],
+            [32, Result::success(33)],
+        ]);
+
+        $rule3->expects($this->exactly(1))->method('__invoke')->willReturnMap([
+            [33, Result::errors($error3)],
+        ]);
+
+        $factory->expects($this->never())->method('__invoke');
+
+        $validation = Validation::factory()->rule($rule1, $rule2, $rule3);
+
+        $pure = Result::pure($factory);
+
+        $pure = $validation($pure, Result::success(11));
+        $pure = $validation($pure, Result::success(21));
+        $pure = $validation($pure, Result::success(31));
+
+        $test = $pure;
+
+        $this->assertEquals($test, Result::errors($error1, $error2, $error3));
     }
 
     /**
@@ -76,52 +205,6 @@ final class ValidationTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
 
         Validation::factory()->rule($value);
-    }
-
-    /**
-     * Test for composition of rules.
-     */
-
-    protected function inputProvider(): array
-    {
-        $rules = [
-            new Rules\Required('key1'),
-            new Rules\IsArray,
-            new Rules\Required('key2'),
-            new Rules\IsArray,
-            new Rules\Required('key3'),
-        ];
-
-        $x = new class
-        {
-        };
-
-        return [
-            [$rules, [], false, null],
-            [$rules, ['key1' => 1], false, null],
-            [$rules, ['key1' => []], false, null],
-            [$rules, ['key1' => ['key2' => 1]], false, null],
-            [$rules, ['key1' => ['key2' => []]], false, null],
-            [$rules, ['key1' => ['key2' => ['key3' => $x]]], true, $x],
-        ];
-    }
-
-    /**
-     * @dataProvider inputProvider
-     */
-    public function testItComposeRules(array $rules, array $input, bool $success, ?object $x): void
-    {
-        $validation = Validation::factory()->rule(...$rules);
-
-        $factory = Result::pure(fn (object $test) => $this->assertSame($test, $x));
-
-        $test = $validation($factory, Result::success($input));
-
-        if (!$success) {
-            $this->expectException(InvalidDataException::class);
-        }
-
-        $test->value();
     }
 
     /**
@@ -205,9 +288,19 @@ final class ValidationTest extends TestCase
      */
     public function testRuleAddAWrappedRuleWhenAClassNameIsGiven(Validation $validation): void
     {
-        $test = $validation->rule(TestClass::class);
+        $test1 = $validation->rule(TestClass::class);
 
-        $this->assertEquals($test, $validation->rule(new Rules\Wrapped(fn ($x) => new TestClass($x))));
+        $this->assertNotSame($test1, $validation);
+        $this->assertEquals($test1, $validation->rule(new Rules\Wrapped(fn ($x) => new TestClass($x))));
+
+        $value = null;
+
+        $test2 = $test1(Result::pure(function ($x) use (&$value) {
+            $value = $x->value;
+            return $x;
+        }), Result::success(1))->value();
+
+        $this->assertEquals($test2, new TestClass($value));
     }
     /**
      * @dataProvider validationProvider
@@ -216,6 +309,7 @@ final class ValidationTest extends TestCase
     {
         $test = $validation->key('key');
 
+        $this->assertNotSame($test, $validation);
         $this->assertEquals($test, $validation->rule(new Rules\Required('key')));
     }
 
@@ -226,6 +320,7 @@ final class ValidationTest extends TestCase
     {
         $test = $validation->key('key1', 'key2', 'key3');
 
+        $this->assertNotSame($test, $validation);
         $this->assertEquals($test, $validation->rule(
             new Rules\Required('key1'),
             new Rules\IsArray,
@@ -243,6 +338,8 @@ final class ValidationTest extends TestCase
         $test1 = $validation->required('key');
         $test2 = $validation->required('key', ...$rules);
 
+        $this->assertNotSame($test1, $validation);
+        $this->assertNotSame($test2, $validation);
         $this->assertEquals($test1, $validation->rule(new Rules\Required('key')));
         $this->assertEquals($test2, $validation->rule(new Rules\Required('key')));
     }
@@ -256,6 +353,9 @@ final class ValidationTest extends TestCase
         $test2 = $validation->optional('key', 'default');
         $test3 = $validation->optional('key', 'default', ...$rules);
 
+        $this->assertNotSame($test1, $validation);
+        $this->assertNotSame($test2, $validation);
+        $this->assertNotSame($test3, $validation);
         $this->assertEquals($test1, $validation->rule(new Rules\Optional('key', null)));
         $this->assertEquals($test2, $validation->rule(new Rules\Optional('key', 'default')));
         $this->assertEquals($test3, $validation->rule(new Rules\Optional('key', 'default')));
@@ -269,6 +369,8 @@ final class ValidationTest extends TestCase
         $test1 = $validation->null();
         $test2 = $validation->null(...$rules);
 
+        $this->assertNotSame($test1, $validation);
+        $this->assertNotSame($test2, $validation);
         $this->assertEquals($test1, $validation->rule(new Rules\IsNull));
         $this->assertEquals($test2, $validation->rule(new Rules\IsNull));
     }
@@ -281,6 +383,8 @@ final class ValidationTest extends TestCase
         $test1 = $validation->bool();
         $test2 = $validation->bool(...$rules);
 
+        $this->assertNotSame($test1, $validation);
+        $this->assertNotSame($test2, $validation);
         $this->assertEquals($test1, $validation->rule(new Rules\IsBool));
         $this->assertEquals($test2, $validation->rule(new Rules\IsBool));
     }
@@ -293,6 +397,8 @@ final class ValidationTest extends TestCase
         $test1 = $validation->int();
         $test2 = $validation->int(...$rules);
 
+        $this->assertNotSame($test1, $validation);
+        $this->assertNotSame($test2, $validation);
         $this->assertEquals($test1, $validation->rule(new Rules\IsInt));
         $this->assertEquals($test2, $validation->rule(new Rules\IsInt, ...$rules));
     }
@@ -305,6 +411,8 @@ final class ValidationTest extends TestCase
         $test1 = $validation->float();
         $test2 = $validation->float(...$rules);
 
+        $this->assertNotSame($test1, $validation);
+        $this->assertNotSame($test2, $validation);
         $this->assertEquals($test1, $validation->rule(new Rules\IsFloat));
         $this->assertEquals($test2, $validation->rule(new Rules\IsFloat, ...$rules));
     }
@@ -317,6 +425,8 @@ final class ValidationTest extends TestCase
         $test1 = $validation->string();
         $test2 = $validation->string(...$rules);
 
+        $this->assertNotSame($test1, $validation);
+        $this->assertNotSame($test2, $validation);
         $this->assertEquals($test1, $validation->rule(new Rules\IsString));
         $this->assertEquals($test2, $validation->rule(new Rules\IsString, ...$rules));
     }
@@ -329,6 +439,8 @@ final class ValidationTest extends TestCase
         $test1 = $validation->array();
         $test2 = $validation->array(...$rules);
 
+        $this->assertNotSame($test1, $validation);
+        $this->assertNotSame($test2, $validation);
         $this->assertEquals($test1, $validation->rule(new Rules\IsArray));
         $this->assertEquals($test2, $validation->rule(new Rules\IsArray, ...$rules));
     }
@@ -341,6 +453,8 @@ final class ValidationTest extends TestCase
         $test1 = $validation->nullable();
         $test2 = $validation->nullable(...$rules);
 
+        $this->assertNotSame($test1, $validation);
+        $this->assertNotSame($test2, $validation);
         $this->assertEquals($test1, $validation->rule(new Rules\Nullable));
         $this->assertEquals($test2, $validation->rule(new Rules\Nullable, ...$rules));
     }
@@ -353,6 +467,8 @@ final class ValidationTest extends TestCase
         $test1 = $validation->positiveInteger();
         $test2 = $validation->positiveInteger(...$rules);
 
+        $this->assertNotSame($test1, $validation);
+        $this->assertNotSame($test2, $validation);
         $this->assertEquals($test1, $validation->rule(new Rules\IsInt, Types\PositiveInteger::class));
         $this->assertEquals($test2, $validation->rule(new Rules\IsInt, Types\PositiveInteger::class));
     }
@@ -365,6 +481,8 @@ final class ValidationTest extends TestCase
         $test1 = $validation->strictlyPositiveInteger();
         $test2 = $validation->strictlyPositiveInteger(...$rules);
 
+        $this->assertNotSame($test1, $validation);
+        $this->assertNotSame($test2, $validation);
         $this->assertEquals($test1, $validation->rule(new Rules\IsInt, Types\StrictlyPositiveInteger::class));
         $this->assertEquals($test2, $validation->rule(new Rules\IsInt, Types\StrictlyPositiveInteger::class));
     }
