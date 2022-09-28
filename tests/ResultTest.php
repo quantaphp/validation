@@ -290,26 +290,95 @@ final class ResultTest extends TestCase
         $f(Result::success(1));
     }
 
-    public function testVariadicWorksAsExpected(): void
+    protected function variadicProvider(): Traversable
     {
-        $factory1 = Result::pure(fn () => 1);
-        $factory2 = Result::pure(fn () => 2);
-        $factory3 = Result::pure(fn () => 3);
-        $factory4 = Result::pure(fn () => 4);
+        $iterables = [
+            'array' => [1, 2, 3],
+            'iterator' => new ArrayIterator([1, 2, 3]),
+            'iterator aggregate' => new class implements IteratorAggregate
+            {
+                public function getIterator(): Traversable
+                {
+                    return new ArrayIterator([1, 2, 3]);
+                }
+            },
+        ];
+
+        foreach ($iterables as $key => $iterable) {
+            yield $key . ' success' => [Result::success($iterable), [
+                Result::success(1, false, '0'),
+                Result::success(2, false, '1'),
+                Result::success(3, false, '2'),
+            ]];
+
+            yield $key . ' nested success' => [Result::success($iterable, false, 'key1', 'key2', 'key3'), [
+                Result::success(1, false, 'key1', 'key2', 'key3', '0'),
+                Result::success(2, false, 'key1', 'key2', 'key3', '1'),
+                Result::success(3, false, 'key1', 'key2', 'key3', '2'),
+            ]];
+
+            yield $key . ' default success' => [Result::success($iterable, true), [
+                Result::success(1, true, '0'),
+                Result::success(2, true, '1'),
+                Result::success(3, true, '2'),
+            ]];
+
+            yield $key . ' default nested success' => [Result::success($iterable, true, 'key1', 'key2', 'key3'), [
+                Result::success(1, true, 'key1', 'key2', 'key3', '0'),
+                Result::success(2, true, 'key1', 'key2', 'key3', '1'),
+                Result::success(3, true, 'key1', 'key2', 'key3', '2'),
+            ]];
+        }
+    }
+
+    /**
+     * @dataProvider variadicProvider
+     */
+    public function testVariadicWorksAsExpected(Result $init, array $results): void
+    {
+        $factories = [
+            Result::pure(fn () => 1),
+            Result::pure(fn () => 2),
+            Result::pure(fn () => 3),
+            Result::pure(fn () => 4),
+        ];
 
         $validation = $this->createMock(ValidationInterface::class);
 
-        $validation->expects($this->exactly(3))->method('__invoke')->willReturnMap([
-            [$factory1, Result::success(1, false, 'key1', 'key2', 'key3', '0'), $factory2],
-            [$factory2, Result::success(2, false, 'key1', 'key2', 'key3', '1'), $factory3],
-            [$factory3, Result::success(3, false, 'key1', 'key2', 'key3', '2'), $factory4],
-        ]);
+        $validation->expects($this->exactly(3))
+            ->method('__invoke')
+            ->willReturnCallback(function ($factory, $result) use ($factories, $results) {
+                if ($factory === $factories[0] && $result == $results[0]) return $factories[1];
+                if ($factory === $factories[1] && $result == $results[1]) return $factories[2];
+                if ($factory === $factories[2] && $result == $results[2]) return $factories[3];
+            });
 
         $variadic = Result::variadic($validation);
 
-        $test = $variadic($factory1, Result::success([1, 2, 3], false, 'key1', 'key2', 'key3'));
+        $test = $variadic($factories[0], $init);
 
-        $this->assertSame($test, $factory4);
+        $this->assertSame($test, $factories[3]);
+    }
+
+    public function testVariadicWorksAsExpectedForError(): void
+    {
+        $factory = Result::pure(fn () => 1);
+        $error = Result::error('label1', 'default1');
+
+        $expected = Result::error('label2', 'default2');
+
+        $validation = $this->createMock(ValidationInterface::class);
+
+        $validation->expects($this->exactly(1))
+            ->method('__invoke')
+            ->with($factory, $error)
+            ->willReturn($expected);
+
+        $variadic = Result::variadic($validation);
+
+        $test = $variadic($factory, $error);
+
+        $this->assertSame($test, $expected);
     }
 
     public function testFunctionReturnedByVariadicThrowsForSuccessContainingANonIterableValue(): void
@@ -323,28 +392,5 @@ final class ResultTest extends TestCase
         $this->expectException(UnexpectedValueException::class);
 
         $variadic(Result::pure(fn () => 1), Result::success(1));
-    }
-
-    private function iterator(array $data): Iterator
-    {
-        return new ArrayIterator($data);
-    }
-
-    private function iteratorAgg(array $data): IteratorAggregate
-    {
-        return new class($data) implements IteratorAggregate
-        {
-            private $data;
-
-            public function __construct(array $data)
-            {
-                $this->data = $data;
-            }
-
-            public function getIterator(): Traversable
-            {
-                return new ArrayIterator($this->data);
-            }
-        };
     }
 }
