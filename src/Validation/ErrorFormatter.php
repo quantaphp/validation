@@ -14,8 +14,8 @@ final class ErrorFormatter implements ErrorFormatterInterface
 
         $message = vsprintf($default, $params);
 
-        if (count($keys) > 0 && strpos($message, '{key}') !== false) {
-            $key = array_pop($keys);
+        if (strpos($message, '{key}') !== false) {
+            $key = count($keys) == 0 ? 'value' : array_pop($keys);
 
             $message = str_replace('{key}', $key, $message);
         }

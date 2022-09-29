@@ -24,7 +24,7 @@ final class ErrorFormatterTest extends TestCase
 
     public function testFormatsDefaultWithParameters(): void
     {
-        $params = ['key1' => 'a', 'key2' => 'b', 'key3' => 1];
+        $params = ['p1' => 'a', 'p2' => 'b', 'p3' => 1];
 
         $test1 = ($this->formatter)(new Error('label', 'default'));
         $test2 = ($this->formatter)(new Error('label', '> %s:%s:%s <', $params));
@@ -35,14 +35,14 @@ final class ErrorFormatterTest extends TestCase
 
     public function testReplacesKeyPlaceholderAndPrependsPath(): void
     {
-        $params = ['key1' => 'a', 'key2' => 'b', 'key3' => 1];
+        $params = ['p1' => 'a', 'p2' => 'b', 'p3' => 1];
 
         $test1 = ($this->formatter)(new Error('label', '> {key} %s:%s:%s <', $params));
         $test2 = ($this->formatter)(new Error('label', '> {key} %s:%s:%s <', $params, 'key1'));
         $test3 = ($this->formatter)(new Error('label', '> {key} %s:%s:%s <', $params, 'key1', 'key2', 'key3'));
         $test4 = ($this->formatter)(new Error('label', '> %s:%s:%s <', $params, 'key1', 'key2', 'key3'));
 
-        $this->assertEquals($test1, '> {key} a:b:1 <');
+        $this->assertEquals($test1, '> value a:b:1 <');
         $this->assertEquals($test2, '> key1 a:b:1 <');
         $this->assertEquals($test3, '[key1][key2] > key3 a:b:1 <');
         $this->assertEquals($test4, '[key1][key2][key3] > a:b:1 <');
