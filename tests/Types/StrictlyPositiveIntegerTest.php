@@ -45,31 +45,4 @@ final class StrictlyPositiveIntegerTest extends TestCase
 
         new Types\StrictlyPositiveInteger(-1);
     }
-
-    public function testValueReturnsValue(): void
-    {
-        $value = new Types\StrictlyPositiveInteger(1);
-
-        $test = $value->value();
-
-        $this->assertEquals($test, 1);
-    }
-
-    public function testCanBeCastedAsString(): void
-    {
-        $value = new Types\StrictlyPositiveInteger(1);
-
-        $test = (string) $value;
-
-        $this->assertEquals($test, '1');
-    }
-
-    public function testCanBeEncodedAsJson(): void
-    {
-        $value = new Types\StrictlyPositiveInteger(1);
-
-        $test = json_encode($value);
-
-        $this->assertEquals($test, '1');
-    }
 }

@@ -473,7 +473,21 @@ final class ValidationTest extends TestCase
     /**
      * @dataProvider validationProvider
      */
-    public function testPositiveIntergerAddsAIsIntAndWrappedRule(Validation $validation, array $rules): void
+    public function testTrimmedAddsATrimmedRule(Validation $validation, array $rules): void
+    {
+        $test1 = $validation->trimmed();
+        $test2 = $validation->trimmed(...$rules);
+
+        $this->assertNotSame($test1, $validation);
+        $this->assertNotSame($test2, $validation);
+        $this->assertEquals($test1, $validation->rule(new Rules\Trimmed));
+        $this->assertEquals($test2, $validation->rule(new Rules\Trimmed, ...$rules));
+    }
+
+    /**
+     * @dataProvider validationProvider
+     */
+    public function testPositiveIntergerAddsAIsIntAndType(Validation $validation, array $rules): void
     {
         $test1 = $validation->positiveInteger();
         $test2 = $validation->positiveInteger(...$rules);
@@ -487,7 +501,7 @@ final class ValidationTest extends TestCase
     /**
      * @dataProvider validationProvider
      */
-    public function testStrictlyPositiveIntergerAddsAIsIntAndWrappedRule(Validation $validation, array $rules): void
+    public function testStrictlyPositiveIntergerAddsAIsIntAndType(Validation $validation, array $rules): void
     {
         $test1 = $validation->strictlyPositiveInteger();
         $test2 = $validation->strictlyPositiveInteger(...$rules);
@@ -496,5 +510,97 @@ final class ValidationTest extends TestCase
         $this->assertNotSame($test2, $validation);
         $this->assertEquals($test1, $validation->rule(new Rules\IsInt, Types\StrictlyPositiveInteger::class));
         $this->assertEquals($test2, $validation->rule(new Rules\IsInt, Types\StrictlyPositiveInteger::class));
+    }
+
+    /**
+     * @dataProvider validationProvider
+     */
+    public function testNonEmptyStringAddsAIsStringAndType(Validation $validation, array $rules): void
+    {
+        $test1 = $validation->nonEmptyString();
+        $test2 = $validation->nonEmptyString(false);
+        $test3 = $validation->nonEmptyString(true);
+        $test4 = $validation->nonEmptyString(false, ...$rules);
+        $test5 = $validation->nonEmptyString(true, ...$rules);
+
+        $this->assertNotSame($test1, $validation);
+        $this->assertNotSame($test2, $validation);
+        $this->assertNotSame($test3, $validation);
+        $this->assertNotSame($test4, $validation);
+        $this->assertNotSame($test5, $validation);
+        $this->assertEquals($test1, $validation->rule(new Rules\IsString, new Rules\Trimmed, Types\NonEmptyString::class));
+        $this->assertEquals($test2, $validation->rule(new Rules\IsString, Types\NonEmptyString::class));
+        $this->assertEquals($test3, $validation->rule(new Rules\IsString, new Rules\Trimmed, Types\NonEmptyString::class));
+        $this->assertEquals($test4, $validation->rule(new Rules\IsString, Types\NonEmptyString::class));
+        $this->assertEquals($test5, $validation->rule(new Rules\IsString, new Rules\Trimmed, Types\NonEmptyString::class));
+    }
+
+    /**
+     * @dataProvider validationProvider
+     */
+    public function testEmailAddsAIsStringAndType(Validation $validation, array $rules): void
+    {
+        $test1 = $validation->nonEmptyString();
+        $test2 = $validation->nonEmptyString(false);
+        $test3 = $validation->nonEmptyString(true);
+        $test4 = $validation->nonEmptyString(false, ...$rules);
+        $test5 = $validation->nonEmptyString(true, ...$rules);
+
+        $this->assertNotSame($test1, $validation);
+        $this->assertNotSame($test2, $validation);
+        $this->assertNotSame($test3, $validation);
+        $this->assertNotSame($test4, $validation);
+        $this->assertNotSame($test5, $validation);
+        $this->assertEquals($test1, $validation->rule(new Rules\IsString, new Rules\Trimmed, Types\Email::class));
+        $this->assertEquals($test2, $validation->rule(new Rules\IsString, Types\Email::class));
+        $this->assertEquals($test3, $validation->rule(new Rules\IsString, new Rules\Trimmed, Types\Email::class));
+        $this->assertEquals($test4, $validation->rule(new Rules\IsString, Types\Email::class));
+        $this->assertEquals($test5, $validation->rule(new Rules\IsString, new Rules\Trimmed, Types\Email::class));
+    }
+
+    /**
+     * @dataProvider validationProvider
+     */
+    public function testUrlAddsAIsStringAndType(Validation $validation, array $rules): void
+    {
+        $test1 = $validation->nonEmptyString();
+        $test2 = $validation->nonEmptyString(false);
+        $test3 = $validation->nonEmptyString(true);
+        $test4 = $validation->nonEmptyString(false, ...$rules);
+        $test5 = $validation->nonEmptyString(true, ...$rules);
+
+        $this->assertNotSame($test1, $validation);
+        $this->assertNotSame($test2, $validation);
+        $this->assertNotSame($test3, $validation);
+        $this->assertNotSame($test4, $validation);
+        $this->assertNotSame($test5, $validation);
+        $this->assertEquals($test1, $validation->rule(new Rules\IsString, new Rules\Trimmed, Types\Url::class));
+        $this->assertEquals($test2, $validation->rule(new Rules\IsString, Types\Url::class));
+        $this->assertEquals($test3, $validation->rule(new Rules\IsString, new Rules\Trimmed, Types\Url::class));
+        $this->assertEquals($test4, $validation->rule(new Rules\IsString, Types\Url::class));
+        $this->assertEquals($test5, $validation->rule(new Rules\IsString, new Rules\Trimmed, Types\Url::class));
+    }
+
+    /**
+     * @dataProvider validationProvider
+     */
+    public function testIpAddressAddsAIsStringAndType(Validation $validation, array $rules): void
+    {
+        $test1 = $validation->nonEmptyString();
+        $test2 = $validation->nonEmptyString(false);
+        $test3 = $validation->nonEmptyString(true);
+        $test4 = $validation->nonEmptyString(false, ...$rules);
+        $test5 = $validation->nonEmptyString(true, ...$rules);
+
+        $this->assertNotSame($test1, $validation);
+        $this->assertNotSame($test2, $validation);
+        $this->assertNotSame($test3, $validation);
+        $this->assertNotSame($test4, $validation);
+        $this->assertNotSame($test5, $validation);
+        $this->assertEquals($test1, $validation->rule(new Rules\IsString, new Rules\Trimmed, Types\IpAddress::class));
+        $this->assertEquals($test2, $validation->rule(new Rules\IsString, Types\IpAddress::class));
+        $this->assertEquals($test3, $validation->rule(new Rules\IsString, new Rules\Trimmed, Types\IpAddress::class));
+        $this->assertEquals($test4, $validation->rule(new Rules\IsString, Types\IpAddress::class));
+        $this->assertEquals($test5, $validation->rule(new Rules\IsString, new Rules\Trimmed, Types\IpAddress::class));
     }
 }

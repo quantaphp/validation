@@ -100,6 +100,14 @@ final class Validation implements ValidationInterface
         return $this->rule(new Rules\Nullable, ...$rules);
     }
 
+    /**
+     * @param string|callable(mixed): Result ...$rules
+     */
+    public function trimmed(...$rules): self
+    {
+        return $this->rule(new Rules\Trimmed, ...$rules);
+    }
+
     public function positiveInteger(): self
     {
         return $this->int(Types\PositiveInteger::class);
@@ -108,6 +116,34 @@ final class Validation implements ValidationInterface
     public function strictlyPositiveInteger(): self
     {
         return $this->int(Types\StrictlyPositiveInteger::class);
+    }
+
+    public function nonEmptyString(bool $trimmed = true): self
+    {
+        return !$trimmed
+            ? $this->string(Types\NonEmptyString::class)
+            : $this->string(new Rules\Trimmed, Types\NonEmptyString::class);
+    }
+
+    public function email(bool $trimmed = true): self
+    {
+        return !$trimmed
+            ? $this->string(Types\Email::class)
+            : $this->string(new Rules\Trimmed, Types\Email::class);
+    }
+
+    public function url(bool $trimmed = true): self
+    {
+        return !$trimmed
+            ? $this->string(Types\Url::class)
+            : $this->string(new Rules\Trimmed, Types\Url::class);
+    }
+
+    public function ipAddress(bool $trimmed = true): self
+    {
+        return !$trimmed
+            ? $this->string(Types\IpAddress::class)
+            : $this->string(new Rules\Trimmed, Types\IpAddress::class);
     }
 
     /**
