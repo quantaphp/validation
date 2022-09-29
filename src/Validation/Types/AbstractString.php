@@ -2,13 +2,10 @@
 
 namespace Quanta\Validation\Types;
 
-abstract class AbstractString implements \JsonSerializable
+abstract class AbstractString implements \Stringable, \JsonSerializable
 {
-    private string $value;
-
-    public function __construct(string $value)
+    public function __construct(private string $value)
     {
-        $this->value = $value;
     }
 
     public function value(): string
@@ -21,8 +18,7 @@ abstract class AbstractString implements \JsonSerializable
         return $this->value;
     }
 
-    #[\ReturnTypeWillChange]
-    public function jsonSerialize()
+    public function jsonSerialize(): string
     {
         return $this->value;
     }

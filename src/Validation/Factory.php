@@ -19,13 +19,20 @@ final class Factory
         return new self(Result::pure(fn (...$xs) => new $class(...$xs)));
     }
 
-    private function __construct(Result $f, ValidationInterface ...$validations)
+    /**
+     * @var ValidationInterface[]
+     */
+    private array $validations;
+
+    private function __construct(private Result $f, ValidationInterface ...$validations)
     {
-        $this->f = $f;
         $this->validations = $validations;
     }
 
-    public function __invoke(array $data)
+    /**
+     * @param mixed[] $data
+     */
+    public function __invoke(array $data): mixed
     {
         $input = Result::unit($data);
 

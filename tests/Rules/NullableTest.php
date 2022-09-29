@@ -9,7 +9,7 @@ use Quanta\Validation\Result;
 
 final class NullableTest extends TestCase
 {
-    protected function valueProvider(): array
+    public function valueProvider(): array
     {
         return [
             // 'null' => [null],

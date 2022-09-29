@@ -8,17 +8,8 @@ use Quanta\Validation\Result;
 
 final class Optional
 {
-    private string $key;
-
-    /**
-     * @var mixed
-     */
-    private $default;
-
-    public function __construct(string $key, mixed $default)
+    public function __construct(private string $key, private mixed $default)
     {
-        $this->key = $key;
-        $this->default = $default;
     }
 
     /**

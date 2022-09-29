@@ -22,7 +22,7 @@ final class Validation implements ValidationInterface
 
     private function __construct(callable ...$rules)
     {
-        $this->rule = $rules;
+        $this->rules = $rules;
     }
 
     public function key(string $key, string ...$keys): self
@@ -42,10 +42,7 @@ final class Validation implements ValidationInterface
         return $this->rule(new Rules\Required($key));
     }
 
-    /**
-     * @param mixed $default
-     */
-    public function optional(string $key, $default = null): self
+    public function optional(string $key, mixed $default = null): self
     {
         return $this->rule(new Rules\Optional($key, $default));
     }
@@ -61,49 +58,55 @@ final class Validation implements ValidationInterface
     }
 
     /**
-     * @param string|callable(mixed): Result ...$rules
+     * @template T
+     * @param string|callable(T): Result ...$rules
      */
-    public function int(...$rules): self
+    public function int(string|callable ...$rules): self
     {
         return $this->rule(new Rules\IsInt, ...$rules);
     }
 
     /**
-     * @param string|callable(mixed): Result ...$rules
+     * @template T
+     * @param string|callable(T): Result ...$rules
      */
-    public function string(...$rules): self
+    public function string(string|callable ...$rules): self
     {
         return $this->rule(new Rules\IsString, ...$rules);
     }
 
     /**
-     * @param string|callable(mixed): Result ...$rules
+     * @template T
+     * @param string|callable(T): Result ...$rules
      */
-    public function float(...$rules): self
+    public function float(string|callable ...$rules): self
     {
         return $this->rule(new Rules\IsFloat, ...$rules);
     }
 
     /**
-     * @param string|callable(mixed): Result ...$rules
+     * @template T
+     * @param string|callable(T): Result ...$rules
      */
-    public function array(...$rules): self
+    public function array(string|callable ...$rules): self
     {
         return $this->rule(new Rules\IsArray, ...$rules);
     }
 
     /**
-     * @param string|callable(mixed): Result ...$rules
+     * @template T
+     * @param string|callable(T): Result ...$rules
      */
-    public function nullable(...$rules): self
+    public function nullable(string|callable ...$rules): self
     {
         return $this->rule(new Rules\Nullable, ...$rules);
     }
 
     /**
-     * @param string|callable(mixed): Result ...$rules
+     * @template T
+     * @param string|callable(T): Result ...$rules
      */
-    public function trimmed(...$rules): self
+    public function trimmed(string|callable ...$rules): self
     {
         return $this->rule(new Rules\Trimmed, ...$rules);
     }
@@ -150,26 +153,26 @@ final class Validation implements ValidationInterface
      * @template T
      * @param string|callable(T): Result ...$rules
      */
-    public function rule(...$rules): self
+    public function rule(string|callable ...$rules): self
     {
         if (count($rules) == 0) return $this;
 
         $rule = array_shift($rules);
 
-        if (is_string($rule) && class_exists($rule)) {
-            $rule = new Rules\Wrapped(fn ($x) => new $rule($x));
+        if (is_string($rule)) {
+            $rule = class_exists($rule)
+                ? new Rules\Wrapped(fn ($x) => new $rule($x))
+                : throw new \InvalidArgumentException(
+                    sprintf('String rule must be an existing class name, %s given', $rule),
+                );
         }
 
-        if (!is_callable($rule)) {
-            throw new \InvalidArgumentException('Rule must be either a callable or an existing class name');
-        }
-
-        return (new self(...$this->rule, ...[Result::bind($rule)]))->rule(...$rules);
+        return (new self(...$this->rules, ...[Result::bind($rule)]))->rule(...$rules);
     }
 
     public function __invoke(Result $factory, Result $input): Result
     {
-        $input = array_reduce($this->rule, [$this, 'reducer'], $input);
+        $input = array_reduce($this->rules, [$this, 'reducer'], $input);
 
         return Result::apply($factory)($input);
     }
@@ -178,7 +181,7 @@ final class Validation implements ValidationInterface
     {
         return VariadicValidation::from(
             $validation,
-            ...$this->rule,
+            ...$this->rules,
             ...[Result::bind(new Rules\IsArray)]
         );
     }

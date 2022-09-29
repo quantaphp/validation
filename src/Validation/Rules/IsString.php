@@ -8,13 +8,10 @@ use Quanta\Validation\Result;
 
 final class IsString
 {
-    /**
-     * @param mixed $value
-     */
-    public function __invoke($value): Result
+    public function __invoke(mixed $value): Result
     {
         return is_string($value)
             ? Result::success($value)
-            : Result::error(self::class, '{key} must be a string, %s given', ['found' => gettype($value)]);
+            : Result::error(self::class, '{key} must be a string, %s given', ['type' => gettype($value)]);
     }
 }

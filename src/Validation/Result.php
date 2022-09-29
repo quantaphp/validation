@@ -13,10 +13,8 @@ final class Result
 
     /**
      * Return a successful result containing the given value.
-     *
-     * @param mixed $value
      */
-    public static function unit($value): self
+    public static function unit(mixed $value): self
     {
         return self::success($value);
     }
@@ -35,10 +33,8 @@ final class Result
      * Success sounds better for functions returning either success or error.
      *
      * Also allows to set the value as default and to set the nesting level.
-     *
-     * @param mixed $value
      */
-    public static function success($value, bool $final = false, string ...$keys): self
+    public static function success(mixed $value, bool $final = false, string ...$keys): self
     {
         return new self(self::SUCCESS, $value, [], $final, ...$keys);
     }
@@ -64,8 +60,6 @@ final class Result
     /**
      * Turn the given function into a function with results as parameters and return value.
      *
-     * Make use of apply so errors are merged.
-     *
      * (a -> b -> c -> ...) -> (Result<a> -> Rersult<b> -> Result<c> -> ...)
      *
      * @return callable(self ...$xs): self
@@ -78,7 +72,7 @@ final class Result
     }
 
     /**
-     * Turn the given result containing a function into a function taking one result as parameter.
+     * Turn the given result containing a pure function into a function taking one result as parameter.
      *
      * Result<Pure<f>> -> (Result<a> -> Result<Pure<g>>)
      * - where f = a -> b -> c -> d -> ...
@@ -90,9 +84,10 @@ final class Result
     {
         if ($f->status == self::ERROR) {
             return function (self $x) use ($f): self {
-                return $x->status == self::ERROR
-                    ? self::errors(...$f->errors, ...$x->errors)
-                    : $f;
+                return match ($x->status) {
+                    self::SUCCESS => $f,
+                    self::ERROR => self::errors(...$f->errors, ...$x->errors),
+                };
             };
         }
 
@@ -107,16 +102,15 @@ final class Result
         }
 
         return function (self $x) use ($f): self {
-            return $x->status == self::SUCCESS
-                ? self::success($f->value->curry($x->value))
-                : $x;
+            return match ($x->status) {
+                self::SUCCESS => self::success($f->value->curry($x->value)),
+                self::ERROR => $x,
+            };
         };
     }
 
     /**
      * Turn the given rule into a composable function.
-     *
-     * A Result is returned when the validation
      *
      * (a -> Result<b>) -> (Result<a> -> Result<b>)
      *
@@ -145,9 +139,10 @@ final class Result
                 return $y;
             }
 
-            return $y->status == self::SUCCESS
-                ? self::success($y->value, $y->final, ...$x->keys, ...$y->keys)
-                : self::errors(...array_map(fn ($e) => $e->nest(...$x->keys), $y->errors));
+            return match ($y->status) {
+                self::SUCCESS => self::success($y->value, $y->final, ...$x->keys, ...$y->keys),
+                self::ERROR => self::errors(...array_map(fn ($e) => $e->nest(...$x->keys), $y->errors))
+            };
         };
     }
 
@@ -184,48 +179,29 @@ final class Result
     }
 
     /**
-     * @var int<1, 2>
-     */
-    private int $status;
-
-    /**
-     * @var mixed
-     */
-    private $value;
-
-    /**
-     * @var Error[]
-     */
-    private array $errors;
-
-    private bool $final;
-
-    /**
      * @var string[]
      */
     private array $keys;
 
     /**
      * @param int<1, 2> $status
-     * @param mixed     $value
      * @param Error[]   $errors
      */
-    private function __construct(int $status, $value, array $errors = [], bool $final = false, string ...$keys)
-    {
-        $this->status = $status;
-        $this->value = $value;
-        $this->errors = $errors;
-        $this->final = $final;
+    private function __construct(
+        private int $status,
+        private mixed $value,
+        private array $errors = [],
+        private bool $final = false,
+        string ...$keys,
+    ) {
         $this->keys = $keys;
     }
 
     /**
      * Return the value of a successful Result or throw an InvalidDataException when the
      * result is an error.
-     *
-     * @return mixed
      */
-    public function value()
+    public function value(): mixed
     {
         if ($this->status == self::ERROR) {
             throw new InvalidDataException(...$this->errors);

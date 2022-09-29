@@ -8,13 +8,10 @@ use Quanta\Validation\Result;
 
 final class IsInt
 {
-    /**
-     * @param mixed $value
-     */
-    public function __invoke($value): Result
+    public function __invoke(mixed $value): Result
     {
         return is_int($value)
             ? Result::success($value)
-            : Result::error(self::class, '{key} must be an integer, %s given', ['found' => gettype($value)]);
+            : Result::error(self::class, '{key} must be an integer, %s given', ['type' => gettype($value)]);
     }
 }

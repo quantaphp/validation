@@ -19,10 +19,7 @@ final class Wrapped
         $this->f = $f;
     }
 
-    /**
-     * @param mixed ...$xs
-     */
-    public function __invoke(...$xs): Result
+    public function __invoke(mixed ...$xs): Result
     {
         try {
             $value = ($this->f)(...$xs);

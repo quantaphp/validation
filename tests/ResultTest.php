@@ -289,7 +289,7 @@ final class ResultTest extends TestCase
         $f(Result::success(1));
     }
 
-    protected function variadicProvider(): Traversable
+    public function variadicProvider(): Traversable
     {
         $iterables = [
             'array' => [1, 2, 3],

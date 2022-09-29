@@ -6,15 +6,6 @@ namespace Quanta\Validation;
 
 final class Error
 {
-    private string $label;
-
-    private string $default;
-
-    /**
-     * @var mixed[]
-     */
-    private array $params;
-
     /**
      * @var string[]
      */
@@ -23,11 +14,12 @@ final class Error
     /**
      * @param mixed[] $params
      */
-    public function __construct(string $label, string $default, array $params = [], string ...$keys)
-    {
-        $this->label = $label;
-        $this->default = $default;
-        $this->params = $params;
+    public function __construct(
+        private string $label,
+        private string $default,
+        private array $params = [],
+        string ...$keys,
+    ) {
         $this->keys = $keys;
     }
 

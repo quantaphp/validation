@@ -8,13 +8,10 @@ use Quanta\Validation\Result;
 
 final class IsFloat
 {
-    /**
-     * @param mixed $value
-     */
-    public function __invoke($value): Result
+    public function __invoke(mixed $value): Result
     {
         return is_int($value) || is_float($value)
             ? Result::success((float) $value)
-            : Result::error(self::class, '{key} must be a float, %s given', ['found' => gettype($value)]);
+            : Result::error(self::class, '{key} must be a float, %s given', ['type' => gettype($value)]);
     }
 }

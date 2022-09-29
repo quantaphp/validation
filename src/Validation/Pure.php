@@ -18,9 +18,8 @@ final class Pure
 
     /**
      * @param mixed ...$xs
-     * @return mixed
      */
-    public function __invoke(...$xs)
+    public function __invoke(...$xs): mixed
     {
         return ($this->f)(...$xs);
     }

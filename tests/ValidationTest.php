@@ -176,7 +176,7 @@ final class ValidationTest extends TestCase
         $this->assertEquals($test, Result::errors($error1, $error2, $error3));
     }
 
-    public function testItThrowsWhenANonPureFactoryIsGiven(): void
+    public function testItThrowsForResultNotContainingAnInstanceOfPure(): void
     {
         $factory = Result::unit(fn () => 1);
 
@@ -188,41 +188,10 @@ final class ValidationTest extends TestCase
     }
 
     /**
-     * Test for invalid rules.
-     */
-
-    protected function nonRuleProvider(): array
-    {
-        return [
-            'null' => [null],
-            'true' => [true],
-            'false' => [false],
-            'int' => [1],
-            'float' => [1.1],
-            'string' => ['value'],
-            'array' => [['value']],
-            'object' => [new class
-            {
-            }],
-            'resource' => [tmpfile()],
-        ];
-    }
-
-    /**
-     * @dataProvider nonRuleProvider
-     */
-    public function testRuleThrowsWhenANonCallableIsGiven($value): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-
-        Validation::factory()->rule($value);
-    }
-
-    /**
      * Test for variadic().
      */
 
-    protected function variadicProvider(): array
+    public function variadicProvider(): array
     {
         $rules1 = [
             fn () => Result::success('rules11'),
@@ -263,7 +232,7 @@ final class ValidationTest extends TestCase
      * Test for rule() function and syntax sugar.
      */
 
-    protected function validationProvider(): array
+    public function validationProvider(): array
     {
         $rules = [
             fn () => Result::success(1),
@@ -297,7 +266,7 @@ final class ValidationTest extends TestCase
     /**
      * @dataProvider validationProvider
      */
-    public function testRuleAddAWrappedRuleWhenAClassNameIsGiven(Validation $validation): void
+    public function testRuleAddAWrappedRuleForClassName(Validation $validation): void
     {
         $test1 = $validation->rule(TestClassValidationTest::class);
 
@@ -313,6 +282,17 @@ final class ValidationTest extends TestCase
 
         $this->assertEquals($test2, new TestClassValidationTest($value));
     }
+
+    /**
+     * @dataProvider validationProvider
+     */
+    public function testRuleThrowsForANonClassNameString(Validation $validation): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        $validation->rule('nonclassname');
+    }
+
     /**
      * @dataProvider validationProvider
      */

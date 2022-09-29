@@ -27,7 +27,7 @@ final class VariadicValidationTest extends TestCase
         $this->assertInstanceOf(ValidationInterface::class, VariadicValidation::from($this->validation));
     }
 
-    protected function variadicProvider(): Traversable
+    public function variadicProvider(): Traversable
     {
         $iterables = [
             'array' => [1, 2, 3],

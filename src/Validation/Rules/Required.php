@@ -8,11 +8,8 @@ use Quanta\Validation\Result;
 
 final class Required
 {
-    private string $key;
-
-    public function __construct(string $key)
+    public function __construct(private string $key)
     {
-        $this->key = $key;
     }
 
     /**

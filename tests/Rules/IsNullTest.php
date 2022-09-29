@@ -10,7 +10,7 @@ use Quanta\Validation\InvalidDataException;
 
 final class IsNullTest extends TestCase
 {
-    protected function valueProvider(): array
+    public function valueProvider(): array
     {
         return [
             // 'null' => [null],
