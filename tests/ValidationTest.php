@@ -14,7 +14,7 @@ use Quanta\Validation\Types;
 use Quanta\Validation\Error;
 use Quanta\Validation\Result;
 
-final class TestClass
+final class TestClassValidationTest
 {
     public $value;
 
@@ -299,10 +299,10 @@ final class ValidationTest extends TestCase
      */
     public function testRuleAddAWrappedRuleWhenAClassNameIsGiven(Validation $validation): void
     {
-        $test1 = $validation->rule(TestClass::class);
+        $test1 = $validation->rule(TestClassValidationTest::class);
 
         $this->assertNotSame($test1, $validation);
-        $this->assertEquals($test1, $validation->rule(new Rules\Wrapped(fn ($x) => new TestClass($x))));
+        $this->assertEquals($test1, $validation->rule(new Rules\Wrapped(fn ($x) => new TestClassValidationTest($x))));
 
         $value = null;
 
@@ -311,7 +311,7 @@ final class ValidationTest extends TestCase
             return $x;
         }), Result::success(1))->value();
 
-        $this->assertEquals($test2, new TestClass($value));
+        $this->assertEquals($test2, new TestClassValidationTest($value));
     }
     /**
      * @dataProvider validationProvider
