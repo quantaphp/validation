@@ -176,6 +176,17 @@ final class ValidationTest extends TestCase
         $this->assertEquals($test, Result::errors($error1, $error2, $error3));
     }
 
+    public function testItThrowsWhenANonPureFactoryIsGiven(): void
+    {
+        $factory = Result::unit(fn () => 1);
+
+        $validation = Validation::factory();
+
+        $this->expectException(UnexpectedValueException::class);
+
+        $validation($factory, Result::success(1));
+    }
+
     /**
      * Test for invalid rules.
      */

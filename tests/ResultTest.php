@@ -6,7 +6,6 @@ require_once __DIR__ . '/TestCallable.php';
 
 use PHPUnit\Framework\TestCase;
 
-use Quanta\Validation;
 use Quanta\ValidationInterface;
 use Quanta\Validation\Pure;
 use Quanta\Validation\Error;
