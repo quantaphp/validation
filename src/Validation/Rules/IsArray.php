@@ -12,6 +12,6 @@ final class IsArray
     {
         return is_array($value)
             ? Result::success($value)
-            : Result::error(self::class, '{key} must be an array, %s given', ['type' => gettype($value)]);
+            : Result::error('{key} must be an array, %s given', ['type' => gettype($value)], self::class);
     }
 }

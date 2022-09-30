@@ -190,9 +190,9 @@ final class VariadicValidationTest extends TestCase
     public function testItWorksAsExpectedForError(): void
     {
         $factory = Result::pure(fn () => 1);
-        $error = Result::error('label1', 'default1');
+        $error = Result::error('default1');
 
-        $expected = Result::error('label2', 'default2');
+        $expected = Result::error('default2');
 
         $this->validation->expects($this->exactly(1))
             ->method('__invoke')

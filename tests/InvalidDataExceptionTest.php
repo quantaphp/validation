@@ -14,7 +14,7 @@ final class InvalidDataExceptionTest extends TestCase
     public function testestImplementsThrowable(): void
     {
         $this->assertInstanceOf(Throwable::class, new InvalidDataException(
-            new Error('label', 'default')
+            Error::from('default')
         ));
     }
 
@@ -22,10 +22,10 @@ final class InvalidDataExceptionTest extends TestCase
     {
         $params = ['key1' => 'a', 'key2' => 'b', 'key3' => 1];
 
-        $error1 = (new Error('label', '> {key} %s:%s:%s <', $params));
-        $error2 = (new Error('label', '> {key} %s:%s:%s <', $params, 'key1'));
-        $error3 = (new Error('label', '> {key} %s:%s:%s <', $params, 'key1', 'key2', 'key3'));
-        $error4 = (new Error('label', '> %s:%s:%s <', $params, 'key1', 'key2', 'key3'));
+        $error1 = (Error::from('> {key} %s:%s:%s <', $params));
+        $error2 = (Error::from('> {key} %s:%s:%s <', $params)->nested('key1'));
+        $error3 = (Error::from('> {key} %s:%s:%s <', $params)->nested('key1', 'key2', 'key3'));
+        $error4 = (Error::from('> %s:%s:%s <', $params)->nested('key1', 'key2', 'key3'));
 
         $formatter = new ErrorFormatter;
 
@@ -41,9 +41,9 @@ final class InvalidDataExceptionTest extends TestCase
 
     public function testUsesTheGivenErrorFormatter(): void
     {
-        $error1 = new Error('label1', 'default1');
-        $error2 = new Error('label2', 'default2');
-        $error3 = new Error('label3', 'default3');
+        $error1 = Error::from('default1');
+        $error2 = Error::from('default2');
+        $error3 = Error::from('default3');
 
         $formatter = $this->createMock(ErrorFormatterInterface::class);
 

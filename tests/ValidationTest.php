@@ -88,7 +88,7 @@ final class ValidationTest extends TestCase
 
         $factory = $this->createMock(TestCallable::class);
 
-        $error = new Error('label', 'default');
+        $error = Error::from('default');
 
         $rule1->expects($this->once())->method('__invoke')->with(1)->willReturn(Result::success(2));
         $rule2->expects($this->once())->method('__invoke')->with(2)->willReturn(Result::errors($error));
@@ -146,9 +146,9 @@ final class ValidationTest extends TestCase
 
     public function testItAccumulatesErrors(): void
     {
-        $error1 = new Error('label1', 'default1');
-        $error2 = new Error('label2', 'default2');
-        $error3 = new Error('label3', 'default3');
+        $error1 = Error::from('default1');
+        $error2 = Error::from('default2');
+        $error3 = Error::from('default3');
 
         $rule1 = $this->createMock(TestCallable::class);
         $rule2 = $this->createMock(TestCallable::class);

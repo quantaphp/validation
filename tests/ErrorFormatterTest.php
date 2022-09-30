@@ -26,8 +26,8 @@ final class ErrorFormatterTest extends TestCase
     {
         $params = ['p1' => 'a', 'p2' => 'b', 'p3' => 1];
 
-        $test1 = ($this->formatter)(new Error('label', 'default'));
-        $test2 = ($this->formatter)(new Error('label', '> %s:%s:%s <', $params));
+        $test1 = ($this->formatter)(Error::from('default'));
+        $test2 = ($this->formatter)(Error::from('> %s:%s:%s <', $params));
 
         $this->assertEquals($test1, 'default');
         $this->assertEquals($test2, '> a:b:1 <');
@@ -37,10 +37,10 @@ final class ErrorFormatterTest extends TestCase
     {
         $params = ['p1' => 'a', 'p2' => 'b', 'p3' => 1];
 
-        $test1 = ($this->formatter)(new Error('label', '> {key} %s:%s:%s <', $params));
-        $test2 = ($this->formatter)(new Error('label', '> {key} %s:%s:%s <', $params, 'key1'));
-        $test3 = ($this->formatter)(new Error('label', '> {key} %s:%s:%s <', $params, 'key1', 'key2', 'key3'));
-        $test4 = ($this->formatter)(new Error('label', '> %s:%s:%s <', $params, 'key1', 'key2', 'key3'));
+        $test1 = ($this->formatter)(Error::from('> {key} %s:%s:%s <', $params));
+        $test2 = ($this->formatter)(Error::from('> {key} %s:%s:%s <', $params,)->nested('key1'));
+        $test3 = ($this->formatter)(Error::from('> {key} %s:%s:%s <', $params,)->nested('key1', 'key2', 'key3'));
+        $test4 = ($this->formatter)(Error::from('> %s:%s:%s <', $params,)->nested('key1', 'key2', 'key3'));
 
         $this->assertEquals($test1, '> value a:b:1 <');
         $this->assertEquals($test2, '> key1 a:b:1 <');

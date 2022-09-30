@@ -13,7 +13,7 @@ class IpAddress extends AbstractString
 
         if ($filtered === false) {
             throw new InvalidDataException(
-                new Error(self::class, '{key} must be formatted as an ip address, %s given', ['value' => $value])
+                Error::from('{key} must be formatted as an ip address, %s given', ['value' => $value], self::class),
             );
         }
 

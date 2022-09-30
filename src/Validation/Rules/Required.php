@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Quanta\Validation\Rules;
 
+use Quanta\Validation\Error;
 use Quanta\Validation\Result;
 
 final class Required
@@ -19,6 +20,8 @@ final class Required
     {
         return array_key_exists($this->key, $data)
             ? Result::success($data[$this->key], false, $this->key)
-            : Result::error(self::class, '{key} is required', [], $this->key);
+            : Result::errors(
+                Error::from('{key} is required', [], self::class)->nested($this->key),
+            );
     }
 }

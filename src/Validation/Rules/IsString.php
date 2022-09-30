@@ -12,6 +12,6 @@ final class IsString
     {
         return is_string($value)
             ? Result::success($value)
-            : Result::error(self::class, '{key} must be a string, %s given', ['type' => gettype($value)]);
+            : Result::error('{key} must be a string, %s given', ['type' => gettype($value)], self::class);
     }
 }

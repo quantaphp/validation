@@ -11,7 +11,7 @@ class PositiveInteger extends AbstractInteger
     {
         if ($value < 0) {
             throw new InvalidDataException(
-                new Error(self::class, '{key} must be positive, %s given', ['value' => $value])
+                Error::from('{key} must be positive, %s given', ['value' => $value], self::class),
             );
         }
 

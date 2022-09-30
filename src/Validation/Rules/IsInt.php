@@ -12,6 +12,6 @@ final class IsInt
     {
         return is_int($value)
             ? Result::success($value)
-            : Result::error(self::class, '{key} must be an integer, %s given', ['type' => gettype($value)]);
+            : Result::error('{key} must be an integer, %s given', ['type' => gettype($value)], self::class);
     }
 }

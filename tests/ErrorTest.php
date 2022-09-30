@@ -8,49 +8,142 @@ use Quanta\Validation\Error;
 
 final class ErrorTest extends TestCase
 {
-    public function testReturnsLabel(): void
+    public function dataProvider(): array
     {
-        $error = new Error('label', 'default');
+        $params = ['p1' => 'a', 'p2' => 'b', 'p3' => 'c'];
+        $labels = ['l1', 'l2', 'l3'];
 
-        $test = $error->label();
-
-        $this->assertEquals($test, 'label');
+        return [
+            [[], [], []],
+            [$params, [], []],
+            [[], $labels, []],
+            [$params, $labels, []],
+        ];
     }
 
-    public function testReturnsDefault(): void
+    public function dataProviderWithKeys(): array
     {
-        $error = new Error('label', 'default');
+        $params = ['p1' => 'a', 'p2' => 'b', 'p3' => 'c'];
+        $labels = ['l1', 'l2', 'l3'];
+        $keys = ['key1', 'key2', 'key3'];
 
-        $test = $error->default();
-
-        $this->assertEquals($test, 'default');
+        return [
+            [[], [], $keys],
+            [[], $labels, $keys],
+            [$params, [], $keys],
+            [$params, $labels, $keys],
+        ];
     }
 
-    public function testReturnsParamsWithEmptyAsDefault(): void
+    public function testFromReturnsAnInstancewithDefaultMessageOnly(): void
     {
-        $params = ['a' => 1, 'b' => 2, 'c' => 3];
+        $test = Error::from('default');
 
-        $error1 = new Error('label', 'default');
-        $error2 = new Error('label', 'default', $params);
-
-        $test1 = $error1->params();
-        $test2 = $error2->params();
-
-        $this->assertEquals($test1, []);
-        $this->assertEquals($test2, $params);
+        $this->assertInstanceOf(Error::class, $test);
+        $this->assertEquals($test->params(), []);
+        $this->assertEquals($test->labels(), []);
+        $this->assertEquals($test->keys(), []);
     }
 
-    public function testReturnsKeysWithEmptyAsDefault(): void
+    /**
+     * @dataProvider dataProvider
+     */
+    public function testFromReturnsAnInstanceWithGivenParamsAndLabels(array $params, array $labels): void
     {
-        $keys = ['a', 'b', 'c'];
+        $test = Error::from('default', $params, ...$labels);
 
-        $error1 = new Error('label', 'default');
-        $error2 = new Error('label', 'default', [], ...$keys);
+        $this->assertInstanceOf(Error::class, $test);
+        $this->assertEquals($test->params(), $params);
+        $this->assertEquals($test->labels(), $labels);
+        $this->assertEquals($test->keys(), []);
+    }
 
-        $test1 = $error1->keys();
-        $test2 = $error2->keys();
+    /**
+     * @dataProvider dataProvider
+     * @dataProvider dataProviderWithKeys
+     */
+    public function testDefaultReturnsDefault(array $params, array $labels, array $keys): void
+    {
+        $test = Error::from('default', $params, ...$labels)->nested(...$keys);
 
-        $this->assertEquals($test1, []);
-        $this->assertEquals($test2, $keys);
+        $this->assertEquals($test->default(), 'default');
+    }
+
+    /**
+     * @dataProvider dataProvider
+     * @dataProvider dataProviderWithKeys
+     */
+    public function testParamsReturnsParams(array $params, array $labels, array $keys): void
+    {
+        $test = Error::from('default', $params, ...$labels)->nested(...$keys);
+
+        $this->assertEquals($test->params(), $params);
+    }
+
+    /**
+     * @dataProvider dataProvider
+     * @dataProvider dataProviderWithKeys
+     */
+    public function testLabelsReturnsLabels(array $params, array $labels, array $keys): void
+    {
+        $test = Error::from('default', $params, ...$labels)->nested(...$keys);
+
+        $this->assertEquals($test->labels(), $labels);
+    }
+
+    /**
+     * @dataProvider dataProvider
+     * @dataProvider dataProviderWithKeys
+     */
+    public function testKeysReturnsKeys(array $params, array $labels, array $keys): void
+    {
+        $test = Error::from('default', $params, ...$labels)->nested(...$keys);
+
+        $this->assertEquals($test->keys(), $keys);
+    }
+
+    /**
+     * @dataProvider dataProvider
+     * @dataProvider dataProviderWithKeys
+     */
+    public function testLabeledReturnsANewInstanceWithLabelsAppended(array $params, array $labels, array $keys): void
+    {
+        $test1 = Error::from('default', $params, ...$labels)->nested(...$keys);
+        $test2 = $test1->labeled();
+        $test3 = $test2->labeled('newl1', 'newl2', 'newl3');
+
+        $this->assertSame($test1, $test2);
+        $this->assertNotSame($test2, $test3);
+        $this->assertEquals($test3->labels(), [...$labels, 'newl1', 'newl2', 'newl3']);
+    }
+
+    /**
+     * @dataProvider dataProvider
+     * @dataProvider dataProviderWithKeys
+     */
+    public function testLabelledReturnsANewInstanceWithLabelsAppended(array $params, array $labels, array $keys): void
+    {
+        $test1 = Error::from('default', $params, ...$labels)->nested(...$keys);
+        $test2 = $test1->labelled();
+        $test3 = $test2->labelled('newl1', 'newl2', 'newl3');
+
+        $this->assertSame($test1, $test2);
+        $this->assertNotSame($test2, $test3);
+        $this->assertEquals($test3->labels(), [...$labels, 'newl1', 'newl2', 'newl3']);
+    }
+
+    /**
+     * @dataProvider dataProvider
+     * @dataProvider dataProviderWithKeys
+     */
+    public function testNestedReturnsANewInstanceWithKeysPrepended(array $params, array $labels, array $keys): void
+    {
+        $test1 = Error::from('default', $params, ...$labels)->nested(...$keys);
+        $test2 = $test1->nested();
+        $test3 = $test2->nested('newkey1', 'newkey2', 'newkey3');
+
+        $this->assertSame($test1, $test2);
+        $this->assertNotSame($test2, $test3);
+        $this->assertEquals($test3->keys(), ['newkey1', 'newkey2', 'newkey3', ...$keys]);
     }
 }

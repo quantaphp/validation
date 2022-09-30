@@ -11,7 +11,7 @@ class NonEmptyString extends AbstractString
     {
         if ($value == '') {
             throw new InvalidDataException(
-                new Error(self::class, '{key} must not be empty', ['value' => $value])
+                Error::from('{key} must not be empty', ['value' => $value], self::class),
             );
         }
 

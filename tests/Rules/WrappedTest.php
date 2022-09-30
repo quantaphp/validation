@@ -19,7 +19,7 @@ final class WrappedTest extends TestCase
             }
 
             if ($i < 0) {
-                throw new InvalidDataException(new Error('label', 'default'));
+                throw new InvalidDataException(Error::from('default'));
             }
 
             return $i * 2;

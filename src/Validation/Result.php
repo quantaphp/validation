@@ -44,9 +44,9 @@ final class Result
      *
      * @param mixed[] $params
      */
-    public static function error(string $label, string $default, array $params = [], string ...$keys): self
+    public static function error(string $default, array $params = [], string ...$labels): self
     {
-        return self::errors(new Error($label, $default, $params, ...$keys));
+        return self::errors(Error::from($default, $params, ...$labels));
     }
 
     /**
@@ -141,7 +141,7 @@ final class Result
 
             return match ($y->status) {
                 self::SUCCESS => self::success($y->value, $y->final, ...$x->keys, ...$y->keys),
-                self::ERROR => self::errors(...array_map(fn ($e) => $e->nest(...$x->keys), $y->errors))
+                self::ERROR => self::errors(...array_map(fn ($e) => $e->nested(...$x->keys), $y->errors))
             };
         };
     }

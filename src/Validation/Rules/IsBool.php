@@ -12,6 +12,6 @@ final class IsBool
     {
         return is_bool($value)
             ? Result::success($value)
-            : Result::error(self::class, '{key} must be a boolean, %s given', ['type' => gettype($value)]);
+            : Result::error('{key} must be a boolean, %s given', ['type' => gettype($value)], self::class);
     }
 }

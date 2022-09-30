@@ -12,6 +12,6 @@ final class IsNull
     {
         return is_null($value)
             ? Result::success($value)
-            : Result::error(self::class, '{key} must be null, %s given', ['type' => gettype($value)]);
+            : Result::error('{key} must be null, %s given', ['type' => gettype($value)], self::class);
     }
 }

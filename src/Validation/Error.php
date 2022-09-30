@@ -7,25 +7,24 @@ namespace Quanta\Validation;
 final class Error
 {
     /**
-     * @var string[]
+     * @param mixed[] $params
      */
-    private array $keys;
+    public static function from(string $default, array $params = [], string ...$labels): self
+    {
+        return new self($default, $params, $labels);
+    }
 
     /**
      * @param mixed[] $params
+     * @param string[] $labels
+     * @param string[] $keys
      */
-    public function __construct(
-        private string $label,
+    private function __construct(
         private string $default,
         private array $params = [],
-        string ...$keys,
+        private array $labels = [],
+        private array $keys = [],
     ) {
-        $this->keys = $keys;
-    }
-
-    public function label(): string
-    {
-        return $this->label;
     }
 
     public function default(): string
@@ -44,13 +43,35 @@ final class Error
     /**
      * @return string[]
      */
+    public function labels(): array
+    {
+        return $this->labels;
+    }
+
+    /**
+     * @return string[]
+     */
     public function keys(): array
     {
         return $this->keys;
     }
 
-    public function nest(string ...$keys): self
+    public function labeled(string ...$labels): self
     {
-        return new self($this->label, $this->default, $this->params, ...$keys, ...$this->keys);
+        return $this->labelled(...$labels);
+    }
+
+    public function labelled(string ...$labels): self
+    {
+        if (count($labels) == 0) return $this;
+
+        return new self($this->default, $this->params, [...$this->labels, ...$labels], $this->keys);
+    }
+
+    public function nested(string ...$keys): self
+    {
+        if (count($keys) == 0) return $this;
+
+        return new self($this->default, $this->params, $this->labels, [...$keys, ...$this->keys]);
     }
 }

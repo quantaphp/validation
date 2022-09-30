@@ -13,7 +13,7 @@ class Email extends AbstractString
 
         if ($filtered === false) {
             throw new InvalidDataException(
-                new Error(self::class, '{key} must be formatted as an email, %s given', ['value' => $value])
+                Error::from('{key} must be formatted as an email, %s given', ['value' => $value], self::class),
             );
         }
 

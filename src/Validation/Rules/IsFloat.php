@@ -12,6 +12,6 @@ final class IsFloat
     {
         return is_int($value) || is_float($value)
             ? Result::success((float) $value)
-            : Result::error(self::class, '{key} must be a float, %s given', ['type' => gettype($value)]);
+            : Result::error('{key} must be a float, %s given', ['type' => gettype($value)], self::class);
     }
 }

@@ -29,14 +29,14 @@ final class ResultTest extends TestCase
     public function testErrorAliasesErrors(): void
     {
         $this->assertEquals(
-            Result::error('label', 'default', ['p1', 'p2', 'p3'], 'key1', 'key2', 'key3'),
-            Result::errors(new Error('label', 'default', ['p1', 'p2', 'p3'], 'key1', 'key2', 'key3'))
+            Result::error('default', ['p1', 'p2', 'p3'], 'l1', 'l2', 'l3'),
+            Result::errors(Error::from('default', ['p1', 'p2', 'p3'], 'l1', 'l2', 'l3'))
         );
     }
 
-    public function testErrorHasDefaultParamsAndKeys(): void
+    public function testErrorHasDefaultParamsAndLabels(): void
     {
-        $this->assertEquals(Result::error('label', 'default'), Result::errors(new Error('label', 'default')));
+        $this->assertEquals(Result::error('default'), Result::errors(Error::from('default')));
     }
 
     public function testSuccessfulResultReturnsValue(): void
@@ -59,9 +59,9 @@ final class ResultTest extends TestCase
 
     public function testErrorResultThrowsInvalidDataException(): void
     {
-        $error1 = new Error('label1', 'default1');
-        $error2 = new Error('label2', 'default2');
-        $error3 = new Error('label3', 'default3');
+        $error1 = Error::from('default1');
+        $error2 = Error::from('default2');
+        $error3 = Error::from('default3');
 
         $result = Result::errors($error1, $error2, $error3);
 
@@ -78,9 +78,9 @@ final class ResultTest extends TestCase
 
         $factory->expects($this->once())->method('__invoke')->with(1, 2, 3)->willReturn('result');
 
-        $error1 = new Error('label1', 'default1');
-        $error2 = new Error('label2', 'default2');
-        $error3 = new Error('label3', 'default3');
+        $error1 = Error::from('default1');
+        $error2 = Error::from('default2');
+        $error3 = Error::from('default3');
 
         $lifted = Result::liftn($factory);
 
@@ -97,9 +97,9 @@ final class ResultTest extends TestCase
 
         $factory->expects($this->once())->method('__invoke')->with(1, 2, 3)->willReturn('result');
 
-        $error1 = new Error('label1', 'default1');
-        $error2 = new Error('label2', 'default2');
-        $error3 = new Error('label3', 'default3');
+        $error1 = Error::from('default1');
+        $error2 = Error::from('default2');
+        $error3 = Error::from('default3');
 
         $pure = Result::pure($factory);
 
@@ -125,9 +125,9 @@ final class ResultTest extends TestCase
 
         $factory->expects($this->never())->method('__invoke');
 
-        $error1 = new Error('label1', 'default1');
-        $error2 = new Error('label2', 'default2');
-        $error3 = new Error('label3', 'default3');
+        $error1 = Error::from('default1');
+        $error2 = Error::from('default2');
+        $error3 = Error::from('default3');
 
         $pure = Result::errors($error1);
 
@@ -168,13 +168,13 @@ final class ResultTest extends TestCase
         $test2 = $f(Result::success(1, false, 'a1', 'a2', 'a3'));
         $test3 = $f(Result::success(1, true));
         $test4 = $f(Result::success(1, true, 'a1', 'a2', 'a3'));
-        $test5 = $f(Result::error('label', 'default', ['p1', 'p2', 'p3'], 'e1', 'e2', 'e3'));
+        $test5 = $f(Result::errors(Error::from('default', ['p1', 'p2', 'p3'])->nested('e1', 'e2', 'e3')));
 
         $this->assertEquals($test1, Result::success('result'));
         $this->assertEquals($test2, Result::success('result', false, 'a1', 'a2', 'a3'));
         $this->assertEquals($test3, Result::success(1, true));
         $this->assertEquals($test4, Result::success(1, true, 'a1', 'a2', 'a3'));
-        $this->assertEquals($test5, Result::error('label', 'default', ['p1', 'p2', 'p3'], 'e1', 'e2', 'e3'));
+        $this->assertEquals($test5, Result::errors(Error::from('default', ['p1', 'p2', 'p3'])->nested('e1', 'e2', 'e3')));
     }
 
     public function testBindWorksAsExpectedForFunctionReturningNestedSuccess(): void
@@ -192,13 +192,13 @@ final class ResultTest extends TestCase
         $test2 = $f(Result::success(1, false, 'a1', 'a2', 'a3'));
         $test3 = $f(Result::success(1, true));
         $test4 = $f(Result::success(1, true, 'a1', 'a2', 'a3'));
-        $test5 = $f(Result::error('label', 'default', ['p1', 'p2', 'p3'], 'e1', 'e2', 'e3'));
+        $test5 = $f(Result::errors(Error::from('default', ['p1', 'p2', 'p3'])->nested('e1', 'e2', 'e3')));
 
         $this->assertEquals($test1, Result::success('result', false, 'b1', 'b2', 'b3'));
         $this->assertEquals($test2, Result::success('result', false, 'a1', 'a2', 'a3', 'b1', 'b2', 'b3'));
         $this->assertEquals($test3, Result::success(1, true));
         $this->assertEquals($test4, Result::success(1, true, 'a1', 'a2', 'a3'));
-        $this->assertEquals($test5, Result::error('label', 'default', ['p1', 'p2', 'p3'], 'e1', 'e2', 'e3'));
+        $this->assertEquals($test5, Result::errors(Error::from('default', ['p1', 'p2', 'p3'])->nested('e1', 'e2', 'e3')));
     }
 
     public function testBindWorksAsExpectedForFunctionReturningDefaultSuccess(): void
@@ -216,13 +216,13 @@ final class ResultTest extends TestCase
         $test2 = $f(Result::success(1, false, 'a1', 'a2', 'a3'));
         $test3 = $f(Result::success(1, true));
         $test4 = $f(Result::success(1, true, 'a1', 'a2', 'a3'));
-        $test5 = $f(Result::error('label', 'default', ['p1', 'p2', 'p3'], 'e1', 'e2', 'e3'));
+        $test5 = $f(Result::errors(Error::from('default', ['p1', 'p2', 'p3'])->nested('e1', 'e2', 'e3')));
 
         $this->assertEquals($test1, Result::success('result', true));
         $this->assertEquals($test2, Result::success('result', true, 'a1', 'a2', 'a3'));
         $this->assertEquals($test3, Result::success(1, true));
         $this->assertEquals($test4, Result::success(1, true, 'a1', 'a2', 'a3'));
-        $this->assertEquals($test5, Result::error('label', 'default', ['p1', 'p2', 'p3'], 'e1', 'e2', 'e3'));
+        $this->assertEquals($test5, Result::errors(Error::from('default', ['p1', 'p2', 'p3'])->nested('e1', 'e2', 'e3')));
     }
 
     public function testBindWorksAsExpectedForFunctionReturningNestedDefaultSuccess(): void
@@ -240,13 +240,13 @@ final class ResultTest extends TestCase
         $test2 = $f(Result::success(1, false, 'a1', 'a2', 'a3'));
         $test3 = $f(Result::success(1, true));
         $test4 = $f(Result::success(1, true, 'a1', 'a2', 'a3'));
-        $test5 = $f(Result::error('label', 'default', ['p1', 'p2', 'p3'], 'e1', 'e2', 'e3'));
+        $test5 = $f(Result::errors(Error::from('default', ['p1', 'p2', 'p3'])->nested('e1', 'e2', 'e3')));
 
         $this->assertEquals($test1, Result::success('result', true, 'b1', 'b2', 'b3'));
         $this->assertEquals($test2, Result::success('result', true, 'a1', 'a2', 'a3', 'b1', 'b2', 'b3'));
         $this->assertEquals($test3, Result::success(1, true));
         $this->assertEquals($test4, Result::success(1, true, 'a1', 'a2', 'a3'));
-        $this->assertEquals($test5, Result::error('label', 'default', ['p1', 'p2', 'p3'], 'e1', 'e2', 'e3'));
+        $this->assertEquals($test5, Result::errors(Error::from('default', ['p1', 'p2', 'p3'])->nested('e1', 'e2', 'e3')));
     }
 
     public function testBindWorksAsExpectedForFunctionReturningError(): void
@@ -256,7 +256,7 @@ final class ResultTest extends TestCase
         $rule->expects($this->exactly(2))
             ->method('__invoke')
             ->with(1)
-            ->willReturn(Result::error('label', 'default', ['q1', 'q2', 'q3'], 'c1', 'c2', 'c3'));
+            ->willReturn(Result::errors(Error::from('default', ['q1', 'q2', 'q3'])->nested('c1', 'c2', 'c3')));
 
         $f = Result::bind($rule);
 
@@ -264,13 +264,13 @@ final class ResultTest extends TestCase
         $test3 = $f(Result::success(1, false, 'a1', 'a2', 'a3'));
         $test2 = $f(Result::success(1, true));
         $test4 = $f(Result::success(1, true, 'a1', 'a2', 'a3'));
-        $test5 = $f(Result::error('label', 'default', ['p1', 'p2', 'p3'], 'e1', 'e2', 'e3'));
+        $test5 = $f(Result::errors(Error::from('default', ['p1', 'p2', 'p3'])->nested('e1', 'e2', 'e3')));
 
-        $this->assertEquals($test1, Result::error('label', 'default', ['q1', 'q2', 'q3'], 'c1', 'c2', 'c3'));
-        $this->assertEquals($test3, Result::error('label', 'default', ['q1', 'q2', 'q3'], 'a1', 'a2', 'a3', 'c1', 'c2', 'c3'));
+        $this->assertEquals($test1, Result::errors(Error::from('default', ['q1', 'q2', 'q3'])->nested('c1', 'c2', 'c3')));
+        $this->assertEquals($test3, Result::errors(Error::from('default', ['q1', 'q2', 'q3'])->nested('a1', 'a2', 'a3', 'c1', 'c2', 'c3')));
         $this->assertEquals($test2, Result::success(1, true));
         $this->assertEquals($test4, Result::success(1, true, 'a1', 'a2', 'a3'));
-        $this->assertEquals($test5, Result::error('label', 'default', ['p1', 'p2', 'p3'], 'e1', 'e2', 'e3'));
+        $this->assertEquals($test5, Result::errors(Error::from('default', ['p1', 'p2', 'p3'])->nested('e1', 'e2', 'e3')));
     }
 
     public function testBindThrowsForCallablesNotReturningAResult(): void
@@ -362,9 +362,9 @@ final class ResultTest extends TestCase
     public function testVariadicWorksAsExpectedForError(): void
     {
         $factory = Result::pure(fn () => 1);
-        $error = Result::error('label1', 'default1');
+        $error = Result::error('default1');
 
-        $expected = Result::error('label2', 'default2');
+        $expected = Result::error('default2');
 
         $validation = $this->createMock(ValidationInterface::class);
 

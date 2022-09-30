@@ -11,7 +11,7 @@ class StrictlyPositiveInteger extends AbstractInteger
     {
         if ($value < 1) {
             throw new InvalidDataException(
-                new Error(self::class, '{key} must be greater than 0, %s given', ['value' => $value])
+                Error::from('{key} must be greater than 0, %s given', ['value' => $value], self::class),
             );
         }
 
