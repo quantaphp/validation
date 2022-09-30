@@ -13,6 +13,8 @@ use Quanta\Validation\Rules;
 use Quanta\Validation\Types;
 use Quanta\Validation\Error;
 use Quanta\Validation\Result;
+use Quanta\Validation\Factory;
+use Quanta\Validation\AbstractInput;
 
 final class TestClassValidationTest
 {
@@ -21,6 +23,14 @@ final class TestClassValidationTest
     public function __construct($value)
     {
         $this->value = $value;
+    }
+}
+
+final class TestAbstractInputValidationTest extends AbstractInput
+{
+    protected static function validation(Factory $factory, Validation $v): Factory
+    {
+        return $factory;
     }
 }
 
@@ -261,6 +271,17 @@ final class ValidationTest extends TestCase
     public function testRuleReturnsANewInstanceWhenRulesAreGiven(Validation $validation): void
     {
         $this->assertNotSame($validation, $validation->rule(fn () => Result::success(1)));
+    }
+
+    /**
+     * @dataProvider validationProvider
+     */
+    public function testRuleAddAWrappedRuleForNameOfAbstractInputImplementation(Validation $validation): void
+    {
+        $test = $validation->rule(TestAbstractInputValidationTest::class);
+
+        $this->assertNotSame($test, $validation);
+        $this->assertEquals($test, $validation->rule(new Rules\Wrapped([TestAbstractInputValidationTest::class, 'from'])));
     }
 
     /**

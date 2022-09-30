@@ -5,11 +5,29 @@ declare(strict_types=1);
 namespace Quanta;
 
 use Quanta\Validation\Result;
+use Quanta\Validation\AbstractInput;
 
 final class VariadicValidation implements ValidationInterface
 {
-    public static function from(ValidationInterface $validation, callable ...$rules): self
+    /**
+     * @param string|ValidationInterface ...$validation
+     */
+    public static function from(string|ValidationInterface $validation, callable ...$rules): self
     {
+        if (is_string($validation)) {
+            if (!is_subclass_of($validation, AbstractInput::class)) {
+                throw new \InvalidArgumentException(
+                    sprintf(
+                        'String validation must be the name of an implementation of %s, %s given',
+                        AbstractInput::class,
+                        $validation,
+                    ),
+                );
+            }
+
+            $validation = Validation::factory()->array($validation);
+        }
+
         return new self(Result::variadic($validation), ...$rules);
     }
 

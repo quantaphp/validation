@@ -7,6 +7,7 @@ namespace Quanta;
 use Quanta\Validation\Rules;
 use Quanta\Validation\Types;
 use Quanta\Validation\Result;
+use Quanta\Validation\AbstractInput;
 
 final class Validation implements ValidationInterface
 {
@@ -58,8 +59,7 @@ final class Validation implements ValidationInterface
     }
 
     /**
-     * @template T
-     * @param string|callable(T): Result ...$rules
+     * @param string|callable(int): Result ...$rules
      */
     public function int(string|callable ...$rules): self
     {
@@ -67,17 +67,7 @@ final class Validation implements ValidationInterface
     }
 
     /**
-     * @template T
-     * @param string|callable(T): Result ...$rules
-     */
-    public function string(string|callable ...$rules): self
-    {
-        return $this->rule(new Rules\IsString, ...$rules);
-    }
-
-    /**
-     * @template T
-     * @param string|callable(T): Result ...$rules
+     * @param string|callable(float): Result ...$rules
      */
     public function float(string|callable ...$rules): self
     {
@@ -85,8 +75,15 @@ final class Validation implements ValidationInterface
     }
 
     /**
-     * @template T
-     * @param string|callable(T): Result ...$rules
+     * @param string|callable(string): Result ...$rules
+     */
+    public function string(string|callable ...$rules): self
+    {
+        return $this->rule(new Rules\IsString, ...$rules);
+    }
+
+    /**
+     * @param string|callable(mixed[]): Result ...$rules
      */
     public function array(string|callable ...$rules): self
     {
@@ -94,8 +91,7 @@ final class Validation implements ValidationInterface
     }
 
     /**
-     * @template T
-     * @param string|callable(T): Result ...$rules
+     * @param string|callable(mixed): Result ...$rules
      */
     public function nullable(string|callable ...$rules): self
     {
@@ -103,8 +99,7 @@ final class Validation implements ValidationInterface
     }
 
     /**
-     * @template T
-     * @param string|callable(T): Result ...$rules
+     * @param string|callable(string): Result ...$rules
      */
     public function trimmed(string|callable ...$rules): self
     {
@@ -160,11 +155,15 @@ final class Validation implements ValidationInterface
         $rule = array_shift($rules);
 
         if (is_string($rule)) {
-            $rule = class_exists($rule)
-                ? new Rules\Wrapped(fn ($x) => new $rule($x))
-                : throw new \InvalidArgumentException(
+            if (!class_exists($rule)) {
+                throw new \InvalidArgumentException(
                     sprintf('String rule must be an existing class name, %s given', $rule),
                 );
+            }
+
+            $rule = is_subclass_of($rule, AbstractInput::class)
+                ? new Rules\Wrapped([$rule, 'from'])
+                : new Rules\Wrapped(fn (...$xs) => new $rule(...$xs));
         }
 
         return (new self(...$this->rules, ...[Result::bind($rule)]))->rule(...$rules);
@@ -177,7 +176,10 @@ final class Validation implements ValidationInterface
         return Result::apply($factory)($input);
     }
 
-    public function variadic(ValidationInterface $validation): ValidationInterface
+    /**
+     * @param string|ValidationInterface ...$validation
+     */
+    public function variadic(string|ValidationInterface $validation): ValidationInterface
     {
         return VariadicValidation::from(
             $validation,

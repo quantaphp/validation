@@ -4,9 +4,24 @@ declare(strict_types=1);
 
 use PHPUnit\Framework\TestCase;
 
+use Quanta\Validation;
 use Quanta\VariadicValidation;
 use Quanta\ValidationInterface;
 use Quanta\Validation\Result;
+use Quanta\Validation\Factory;
+use Quanta\Validation\AbstractInput;
+
+final class TestClassVariadicValidationTest
+{
+}
+
+final class TestAbstractInputVariadicValidationTest extends AbstractInput
+{
+    protected static function validation(Factory $factory, Validation $v): Factory
+    {
+        return $factory;
+    }
+}
 
 final class VariadicValidationTest extends TestCase
 {
@@ -17,14 +32,51 @@ final class VariadicValidationTest extends TestCase
         $this->validation = $this->createMock(ValidationInterface::class);
     }
 
-    public function testFromReturnsAnInstanceOfVariadicValidation(): void
-    {
-        $this->assertInstanceOf(VariadicValidation::class, VariadicValidation::from($this->validation));
-    }
-
     public function testImplementsValidationInterface(): void
     {
         $this->assertInstanceOf(ValidationInterface::class, VariadicValidation::from($this->validation));
+    }
+
+    public function rulesProvider()
+    {
+        return [
+            [[]],
+            [[
+                fn () => Result::success(1),
+                fn () => Result::success(2),
+                fn () => Result::success(3),
+            ]],
+        ];
+    }
+
+    /**
+     * @dataProvider rulesProvider
+     */
+    public function testFromReturnsAnInstanceOfVariadicValidation(array $rules): void
+    {
+        $this->assertInstanceOf(VariadicValidation::class, VariadicValidation::from($this->validation, ...$rules));
+    }
+
+    /**
+     * @dataProvider rulesProvider
+     */
+    public function testFromReturnsAVariadicValidationForAbstractInputClassName(array $rules): void
+    {
+        $test = VariadicValidation::from(TestAbstractInputVariadicValidationTest::class, ...$rules);
+
+        $expected = VariadicValidation::from(Validation::factory()->array(TestAbstractInputValidationTest::class), ...$rules);
+
+        $this->assertEquals($test, $expected);
+    }
+
+    /**
+     * @dataProvider rulesProvider
+     */
+    public function testFromThrowsForStringNotAnAbstractInputClassName(array $rules): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        VariadicValidation::from(TestClassVariadicValidationTest::class, ...$rules);
     }
 
     public function variadicProvider(): Traversable

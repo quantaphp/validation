@@ -50,7 +50,10 @@ final class Factory
         return new self($this->f, ...$this->validations, ...$validations);
     }
 
-    public function variadic(ValidationInterface $validation): self
+    /**
+     * @param string|ValidationInterface ...$validation
+     */
+    public function variadic(string|ValidationInterface $validation): self
     {
         return $this->validation(VariadicValidation::from($validation));
     }
