@@ -11,13 +11,16 @@ abstract class AbstractInput
     /**
      * @param mixed[] $data
      */
-    public static function from(array $data): mixed
+    public static function from(array $data): static
     {
         $v = Validation::factory();
         $factory = Factory::class(static::class);
 
         $factory = static::validation($factory, $v);
 
+        /**
+         * @var static
+         */
         return $factory($data);
     }
 
