@@ -368,6 +368,34 @@ final class ValidationTest extends TestCase
     /**
      * @dataProvider validationAndRulesProvider
      */
+    public function testPositiveFloatAddsAIsFloatAndType(Validation $validation, array $rules): void
+    {
+        $test1 = $validation->positiveFloat();
+        $test2 = $validation->positiveFloat(...$rules);
+
+        $this->assertNotSame($test1, $validation);
+        $this->assertNotSame($test2, $validation);
+        $this->assertEquals($test1, $validation->rule(new Rules\IsFloat, Types\PositiveFloat::class));
+        $this->assertEquals($test2, $validation->rule(new Rules\IsFloat, Types\PositiveFloat::class));
+    }
+
+    /**
+     * @dataProvider validationAndRulesProvider
+     */
+    public function testStrictlyPositiveFloatAddsAIsFloatAndType(Validation $validation, array $rules): void
+    {
+        $test1 = $validation->strictlyPositiveFloat();
+        $test2 = $validation->strictlyPositiveFloat(...$rules);
+
+        $this->assertNotSame($test1, $validation);
+        $this->assertNotSame($test2, $validation);
+        $this->assertEquals($test1, $validation->rule(new Rules\IsFloat, Types\StrictlyPositiveFloat::class));
+        $this->assertEquals($test2, $validation->rule(new Rules\IsFloat, Types\StrictlyPositiveFloat::class));
+    }
+
+    /**
+     * @dataProvider validationAndRulesProvider
+     */
     public function testNonEmptyStringAddsAIsStringAndType(Validation $validation, array $rules): void
     {
         $test1 = $validation->nonEmptyString();

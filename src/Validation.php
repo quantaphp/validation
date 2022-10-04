@@ -119,6 +119,16 @@ final class Validation
         return $this->int(Types\StrictlyPositiveInteger::class);
     }
 
+    public function positiveFloat(): self
+    {
+        return $this->float(Types\PositiveFloat::class);
+    }
+
+    public function strictlyPositiveFloat(): self
+    {
+        return $this->float(Types\StrictlyPositiveFloat::class);
+    }
+
     public function nonEmptyString(bool $trimmed = true): self
     {
         return !$trimmed
