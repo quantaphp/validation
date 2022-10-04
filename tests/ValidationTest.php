@@ -7,14 +7,14 @@ require_once __DIR__ . '/TestCallable.php';
 use PHPUnit\Framework\TestCase;
 
 use Quanta\Validation;
-use Quanta\VariadicValidation;
-use Quanta\ValidationInterface;
 use Quanta\Validation\Rules;
 use Quanta\Validation\Types;
-use Quanta\Validation\Error;
 use Quanta\Validation\Result;
 use Quanta\Validation\Factory;
 use Quanta\Validation\AbstractInput;
+use Quanta\Validation\Reducers\VariadicReducer;
+use Quanta\Validation\Reducers\CombinedReducer;
+use Quanta\Validation\Reducers\ReducerInterface;
 
 final class TestClassValidationTest
 {
@@ -36,11 +36,6 @@ final class TestAbstractInputValidationTest extends AbstractInput
 
 final class ValidationTest extends TestCase
 {
-    public function testImplementsValidationInterface(): void
-    {
-        $this->assertInstanceOf(ValidationInterface::class, Validation::factory());
-    }
-
     public function testFactoryReturnsAnInstanceOfValidation(): void
     {
         $this->assertInstanceOf(Validation::class, Validation::factory());
@@ -48,194 +43,51 @@ final class ValidationTest extends TestCase
 
     public function testFactoryReturnsAnEmptyInstance(): void
     {
-        $factory = $this->createMock(TestCallable::class);
-
-        $factory->expects($this->once())->method('__invoke')->with(1)->willReturn('result');
+        $result = Result::success(1);
 
         $validation = Validation::factory();
 
-        $test = $validation(Result::pure($factory), Result::success(1))->value();
+        $test = $validation($result);
 
-        $this->assertEquals($test, 'result');
+        $this->assertSame($test, $result);
     }
 
     public function testItComposeRulesReturningSuccess(): void
     {
+        $result = Result::success('result');
+
         $rule1 = $this->createMock(TestCallable::class);
         $rule2 = $this->createMock(TestCallable::class);
         $rule3 = $this->createMock(TestCallable::class);
-
-        $factory = $this->createMock(TestCallable::class);
 
         $rule1->expects($this->once())->method('__invoke')->with(1)->willReturn(Result::success(2));
         $rule2->expects($this->once())->method('__invoke')->with(2)->willReturn(Result::success(3));
-        $rule3->expects($this->once())->method('__invoke')->with(3)->willReturn(Result::success(4));
-
-        $factory->expects($this->once())->method('__invoke')->with(4)->willReturn('result');
+        $rule3->expects($this->once())->method('__invoke')->with(3)->willReturn($result);
 
         $validation = Validation::factory()->rule($rule1, $rule2, $rule3);
 
-        $test = $validation(Result::pure($factory), Result::success(1))->value();
+        $test = $validation(Result::success(1));
 
-        $this->assertEquals($test, 'result');
+        $this->assertSame($test, $result);
     }
 
-    public function testItShortcutValidationWhenARuleReturnsAnError(): void
+    public function testItShortcutSubsequentRulesWhenARuleReturnsAnError(): void
     {
+        $error = Result::error('default');
+
         $rule1 = $this->createMock(TestCallable::class);
         $rule2 = $this->createMock(TestCallable::class);
         $rule3 = $this->createMock(TestCallable::class);
-
-        $factory = $this->createMock(TestCallable::class);
-
-        $error = Error::from('default');
 
         $rule1->expects($this->once())->method('__invoke')->with(1)->willReturn(Result::success(2));
-        $rule2->expects($this->once())->method('__invoke')->with(2)->willReturn(Result::errors($error));
+        $rule2->expects($this->once())->method('__invoke')->with(2)->willReturn($error);
         $rule3->expects($this->never())->method('__invoke');
 
-        $factory->expects($this->never())->method('__invoke');
-
         $validation = Validation::factory()->rule($rule1, $rule2, $rule3);
 
-        $test = $validation(Result::pure($factory), Result::success(1));
+        $test = $validation(Result::success(1));
 
-        $this->assertEquals($test, Result::errors($error));
-    }
-
-    public function testItAccumulatesSuccessAsFactoryParameters(): void
-    {
-        $rule1 = $this->createMock(TestCallable::class);
-        $rule2 = $this->createMock(TestCallable::class);
-        $rule3 = $this->createMock(TestCallable::class);
-
-        $factory = $this->createMock(TestCallable::class);
-
-        $rule1->expects($this->exactly(3))->method('__invoke')->willReturnMap([
-            [11, Result::success(12)],
-            [21, Result::success(22)],
-            [31, Result::success(32)],
-        ]);
-
-        $rule2->expects($this->exactly(3))->method('__invoke')->willReturnMap([
-            [12, Result::success(13)],
-            [22, Result::success(23)],
-            [32, Result::success(33)],
-        ]);
-
-        $rule3->expects($this->exactly(3))->method('__invoke')->willReturnMap([
-            [13, Result::success(14)],
-            [23, Result::success(24)],
-            [33, Result::success(34)],
-        ]);
-
-        $factory->expects($this->once())->method('__invoke')->with(14, 24, 34)->willReturn('result');
-
-        $validation = Validation::factory()->rule($rule1, $rule2, $rule3);
-
-        $pure = Result::pure($factory);
-
-        $pure = $validation($pure, Result::success(11));
-        $pure = $validation($pure, Result::success(21));
-        $pure = $validation($pure, Result::success(31));
-
-        $test = $pure->value();
-
-        $this->assertEquals($test, 'result');
-    }
-
-    public function testItAccumulatesErrors(): void
-    {
-        $error1 = Error::from('default1');
-        $error2 = Error::from('default2');
-        $error3 = Error::from('default3');
-
-        $rule1 = $this->createMock(TestCallable::class);
-        $rule2 = $this->createMock(TestCallable::class);
-        $rule3 = $this->createMock(TestCallable::class);
-
-        $factory = $this->createMock(TestCallable::class);
-
-        $rule1->expects($this->exactly(3))->method('__invoke')->willReturnMap([
-            [11, Result::errors($error1)],
-            [21, Result::success(22)],
-            [31, Result::success(32)],
-        ]);
-
-        $rule2->expects($this->exactly(2))->method('__invoke')->willReturnMap([
-            [22, Result::errors($error2)],
-            [32, Result::success(33)],
-        ]);
-
-        $rule3->expects($this->exactly(1))->method('__invoke')->willReturnMap([
-            [33, Result::errors($error3)],
-        ]);
-
-        $factory->expects($this->never())->method('__invoke');
-
-        $validation = Validation::factory()->rule($rule1, $rule2, $rule3);
-
-        $pure = Result::pure($factory);
-
-        $pure = $validation($pure, Result::success(11));
-        $pure = $validation($pure, Result::success(21));
-        $pure = $validation($pure, Result::success(31));
-
-        $test = $pure;
-
-        $this->assertEquals($test, Result::errors($error1, $error2, $error3));
-    }
-
-    public function testItThrowsForResultNotContainingAnInstanceOfPure(): void
-    {
-        $factory = Result::unit(fn () => 1);
-
-        $validation = Validation::factory();
-
-        $this->expectException(UnexpectedValueException::class);
-
-        $validation($factory, Result::success(1));
-    }
-
-    /**
-     * Test for variadic().
-     */
-
-    public function variadicProvider(): array
-    {
-        $rules1 = [
-            fn () => Result::success('rules11'),
-            fn () => Result::success('rules12'),
-            fn () => Result::success('rules13'),
-        ];
-
-        $rules2 = [
-            fn () => Result::success('rules21'),
-            fn () => Result::success('rules22'),
-            fn () => Result::success('rules23'),
-        ];
-
-        return [
-            [[], []],
-            [$rules1, []],
-            [[], $rules2],
-            [$rules1, $rules2],
-        ];
-    }
-
-    /**
-     * @dataProvider variadicProvider
-     */
-    public function testVariadicReturnsAVariadicValidationWithThisRulesAndTheGivenValidation(array $rules1, array $rules2): void
-    {
-        $validation = Validation::factory()->rule(...$rules1);
-
-        $test = Validation::factory()->rule(...$rules2)->variadic($validation);
-
-        $this->assertEquals($test, VariadicValidation::from(
-            $validation,
-            ...array_map([Result::class, 'bind'], [...$rules2, new Rules\IsArray]),
-        ));
+        $this->assertSame($test, $error);
     }
 
     /**
@@ -243,6 +95,15 @@ final class ValidationTest extends TestCase
      */
 
     public function validationProvider(): array
+    {
+        return [
+            'empty' => [Validation::factory(), 0],
+            'one rule' => [Validation::factory()->rule(fn () => Result::success(1)), 1],
+            'many rules' => [Validation::factory()->rule(fn () => Result::success(1), fn () => Result::success(2)), 2],
+        ];
+    }
+
+    public function validationAndRulesProvider(): array
     {
         $rules = [
             fn () => Result::success(1),
@@ -289,19 +150,10 @@ final class ValidationTest extends TestCase
      */
     public function testRuleAddAWrappedRuleForClassName(Validation $validation): void
     {
-        $test1 = $validation->rule(TestClassValidationTest::class);
+        $test = $validation->rule(TestClassValidationTest::class);
 
-        $this->assertNotSame($test1, $validation);
-        $this->assertEquals($test1, $validation->rule(new Rules\Wrapped(fn ($x) => new TestClassValidationTest($x))));
-
-        $value = null;
-
-        $test2 = $test1(Result::pure(function ($x) use (&$value) {
-            $value = $x->value;
-            return $x;
-        }), Result::success(1))->value();
-
-        $this->assertEquals($test2, new TestClassValidationTest($value));
+        $this->assertNotSame($test, $validation);
+        $this->assertEquals($test, $validation->rule(new Rules\Wrapped(fn ($x) => new TestClassValidationTest($x))));
     }
 
     /**
@@ -343,7 +195,7 @@ final class ValidationTest extends TestCase
     }
 
     /**
-     * @dataProvider validationProvider
+     * @dataProvider validationAndRulesProvider
      */
     public function testRequiredAddsARequiredRule(Validation $validation, array $rules): void
     {
@@ -357,7 +209,7 @@ final class ValidationTest extends TestCase
     }
 
     /**
-     * @dataProvider validationProvider
+     * @dataProvider validationAndRulesProvider
      */
     public function testOptionalAddsAnOptionalRule(Validation $validation, array $rules): void
     {
@@ -374,7 +226,7 @@ final class ValidationTest extends TestCase
     }
 
     /**
-     * @dataProvider validationProvider
+     * @dataProvider validationAndRulesProvider
      */
     public function testNullAddsAIsNullRule(Validation $validation, array $rules): void
     {
@@ -388,7 +240,7 @@ final class ValidationTest extends TestCase
     }
 
     /**
-     * @dataProvider validationProvider
+     * @dataProvider validationAndRulesProvider
      */
     public function testBoolAddsAIsBoolRule(Validation $validation, array $rules): void
     {
@@ -402,7 +254,7 @@ final class ValidationTest extends TestCase
     }
 
     /**
-     * @dataProvider validationProvider
+     * @dataProvider validationAndRulesProvider
      */
     public function testIntAddsAIsIntRule(Validation $validation, array $rules): void
     {
@@ -416,7 +268,7 @@ final class ValidationTest extends TestCase
     }
 
     /**
-     * @dataProvider validationProvider
+     * @dataProvider validationAndRulesProvider
      */
     public function testFloatAddsAIsFloatRule(Validation $validation, array $rules): void
     {
@@ -430,7 +282,7 @@ final class ValidationTest extends TestCase
     }
 
     /**
-     * @dataProvider validationProvider
+     * @dataProvider validationAndRulesProvider
      */
     public function testStringAddsAIsStringRule(Validation $validation, array $rules): void
     {
@@ -444,7 +296,7 @@ final class ValidationTest extends TestCase
     }
 
     /**
-     * @dataProvider validationProvider
+     * @dataProvider validationAndRulesProvider
      */
     public function testArrayAddsAIsArrayRule(Validation $validation, array $rules): void
     {
@@ -458,7 +310,7 @@ final class ValidationTest extends TestCase
     }
 
     /**
-     * @dataProvider validationProvider
+     * @dataProvider validationAndRulesProvider
      */
     public function testNullableAddsANullableRule(Validation $validation, array $rules): void
     {
@@ -472,7 +324,7 @@ final class ValidationTest extends TestCase
     }
 
     /**
-     * @dataProvider validationProvider
+     * @dataProvider validationAndRulesProvider
      */
     public function testTrimmedAddsATrimmedRule(Validation $validation, array $rules): void
     {
@@ -486,7 +338,7 @@ final class ValidationTest extends TestCase
     }
 
     /**
-     * @dataProvider validationProvider
+     * @dataProvider validationAndRulesProvider
      */
     public function testPositiveIntergerAddsAIsIntAndType(Validation $validation, array $rules): void
     {
@@ -500,7 +352,7 @@ final class ValidationTest extends TestCase
     }
 
     /**
-     * @dataProvider validationProvider
+     * @dataProvider validationAndRulesProvider
      */
     public function testStrictlyPositiveIntergerAddsAIsIntAndType(Validation $validation, array $rules): void
     {
@@ -514,7 +366,7 @@ final class ValidationTest extends TestCase
     }
 
     /**
-     * @dataProvider validationProvider
+     * @dataProvider validationAndRulesProvider
      */
     public function testNonEmptyStringAddsAIsStringAndType(Validation $validation, array $rules): void
     {
@@ -537,7 +389,7 @@ final class ValidationTest extends TestCase
     }
 
     /**
-     * @dataProvider validationProvider
+     * @dataProvider validationAndRulesProvider
      */
     public function testEmailAddsAIsStringAndType(Validation $validation, array $rules): void
     {
@@ -560,7 +412,7 @@ final class ValidationTest extends TestCase
     }
 
     /**
-     * @dataProvider validationProvider
+     * @dataProvider validationAndRulesProvider
      */
     public function testUrlAddsAIsStringAndType(Validation $validation, array $rules): void
     {
@@ -583,7 +435,7 @@ final class ValidationTest extends TestCase
     }
 
     /**
-     * @dataProvider validationProvider
+     * @dataProvider validationAndRulesProvider
      */
     public function testIpAddressAddsAIsStringAndType(Validation $validation, array $rules): void
     {
@@ -603,5 +455,67 @@ final class ValidationTest extends TestCase
         $this->assertEquals($test3, $validation->rule(new Rules\IsString, new Rules\Trimmed, Types\IpAddress::class));
         $this->assertEquals($test4, $validation->rule(new Rules\IsString, Types\IpAddress::class));
         $this->assertEquals($test5, $validation->rule(new Rules\IsString, new Rules\Trimmed, Types\IpAddress::class));
+    }
+
+    /**
+     * @dataProvider validationProvider
+     */
+    public function testVariadicReturnsAReducerForNameOfAbstractInputImplementation(Validation $validation, int $nb): void
+    {
+        $test = $validation->variadic(TestAbstractInputValidationTest::class);
+
+        $reducer = VariadicReducer::from(TestAbstractInputValidationTest::class);
+
+        if ($nb == 0) {
+            $this->assertEquals($test, $reducer);
+        } else {
+            $this->assertEquals($test, new CombinedReducer($validation->array(), $reducer));
+        }
+    }
+
+    /**
+     * @dataProvider validationProvider
+     */
+    public function testVariadicResturnsAReducerForValidation(Validation $validation1, int $nb): void
+    {
+        $validation2 = Validation::factory();
+
+        $test = $validation1->variadic($validation2);
+
+        $reducer = VariadicReducer::from($validation2);
+
+        if ($nb == 0) {
+            $this->assertEquals($test, $reducer);
+        } else {
+            $this->assertEquals($test, new CombinedReducer($validation1->array(), $reducer));
+        }
+    }
+
+    /**
+     * @dataProvider validationProvider
+     */
+    public function testVariadicResturnsAReducerForReducerInterface(Validation $validation, int $nb): void
+    {
+        $reducer = $this->createMock(ReducerInterface::class);
+
+        $test = $validation->variadic($reducer);
+
+        $reducer = VariadicReducer::from($reducer);
+
+        if ($nb == 0) {
+            $this->assertEquals($test, $reducer);
+        } else {
+            $this->assertEquals($test, new CombinedReducer($validation->array(), $reducer));
+        }
+    }
+
+    /**
+     * @dataProvider validationProvider
+     */
+    public function testVariadicThrowsForString(Validation $validation): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        $test = $validation->variadic('nonclassname');
     }
 }

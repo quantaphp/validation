@@ -2,13 +2,17 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/TestCallable.php';
+
 use PHPUnit\Framework\TestCase;
 
 use Quanta\Validation;
-use Quanta\VariadicValidation;
-use Quanta\ValidationInterface;
 use Quanta\Validation\Result;
 use Quanta\Validation\Factory;
+use Quanta\Validation\AbstractInput;
+use Quanta\Validation\Reducers\Reducer;
+use Quanta\Validation\Reducers\VariadicReducer;
+use Quanta\Validation\Reducers\ReducerInterface;
 
 final class TestClassFactoryTest
 {
@@ -17,6 +21,14 @@ final class TestClassFactoryTest
     public function __construct(int ...$xs)
     {
         $this->xs = $xs;
+    }
+}
+
+final class TestAbstractInputFactoryTest extends AbstractInput
+{
+    protected static function validation(Factory $factory, Validation $v): Factory
+    {
+        return $factory;
     }
 }
 
@@ -32,7 +44,7 @@ final class FactoryTest extends TestCase
         $this->assertInstanceOf(Factory::class, Factory::class(TestClassFactoryTest::class));
     }
 
-    public function testValidationReturnsTheSameInstanceWhenNoValidationAreGiven(): void
+    public function testValidationReturnsTheSameInstanceWhenNoParameterIsGiven(): void
     {
         $factory = Factory::from(fn () => 1);
 
@@ -41,60 +53,125 @@ final class FactoryTest extends TestCase
         $this->assertSame($test, $factory);
     }
 
-    public function testValidationReturnsANewInstanceWhenValidationsAreGiven(): void
+    public function testValidationReturnsANewInstanceWhenReducersAreGiven(): void
     {
         $factory = Factory::from(fn () => 1);
 
-        $validation1 = $this->createMock(ValidationInterface::class);
-        $validation2 = $this->createMock(ValidationInterface::class);
-        $validation3 = $this->createMock(ValidationInterface::class);
+        $reducer1 = $this->createMock(ReducerInterface::class);
+        $reducer2 = $this->createMock(ReducerInterface::class);
+        $reducer3 = $this->createMock(ReducerInterface::class);
 
-        $test = $factory->validation($validation1, $validation2, $validation3);
+        $test = $factory->validation($reducer1, $reducer2, $reducer3);
 
         $this->assertNotSame($test, $factory);
         $this->assertInstanceOf(Factory::class, $test);
     }
 
-    public function testVariadicWrapsTheGivenValidationIntoVariadicValidation(): void
+    public function testValidationWrapsTheGivenValidationsIntoReducers(): void
+    {
+        $factory = Factory::from(fn () => 1);
+
+        $validation1 = Validation::factory();
+        $validation2 = Validation::factory();
+        $validation3 = Validation::factory();
+
+        $test = $factory->validation($validation1, $validation2, $validation3);
+
+        $this->assertNotSame($test, $factory);
+        $this->assertInstanceOf(Factory::class, $test);
+        $this->assertEquals($test, $factory->validation(
+            new Reducer($validation1),
+            new Reducer($validation2),
+            new Reducer($validation3),
+        ));
+    }
+
+    public function testVariadicWrapsTheGivenAbstractInputClassNameIntoVariadicReducer(): void
     {
         $f = fn () => 1;
 
         $factory = Factory::from($f);
 
-        $validation = $this->createMock(ValidationInterface::class);
+        $test = $factory->variadic(TestAbstractInputFactoryTest::class);
+
+        $this->assertNotSame($test, $factory);
+        $this->assertInstanceOf(Factory::class, $test);
+        $this->assertEquals($test, $factory->validation(VariadicReducer::from(TestAbstractInputFactoryTest::class)));
+    }
+
+    public function testVariadicWrapsTheGivenReducerIntoVariadicReducer(): void
+    {
+        $f = fn () => 1;
+
+        $factory = Factory::from($f);
+
+        $reducer = $this->createMock(ReducerInterface::class);
+
+        $test = $factory->variadic($reducer);
+
+        $this->assertNotSame($test, $factory);
+        $this->assertInstanceOf(Factory::class, $test);
+        $this->assertEquals($test, $factory->validation(VariadicReducer::from($reducer)));
+    }
+
+    public function testVariadicWrapsTheGivenValidationIntoVariadicReducer(): void
+    {
+        $f = fn () => 1;
+
+        $factory = Factory::from($f);
+
+        $validation = Validation::factory();
 
         $test = $factory->variadic($validation);
 
-        $this->assertEquals($test, $factory->validation(VariadicValidation::from($validation)));
+        $this->assertNotSame($test, $factory);
+        $this->assertInstanceOf(Factory::class, $test);
+        $this->assertEquals($test, $factory->validation(VariadicReducer::from($validation)));
     }
 
-    public function testItAppiesValidationOnTheFactoryCallable(): void
+    public function testItCallsTheFactoryCallableWithNoParameterWhenThereIsNoReducer(): void
     {
-        $v = Validation::factory();
+        $callable = $this->createMock(TestCallable::class);
 
-        $factory = Factory::from(fn (int ...$xs) => implode(':', $xs));
+        $callable->expects($this->once())->method('__invoke')->willReturn('result');
 
-        $factory = $factory->validation($v->rule(fn (array $data) => Result::success($data[0])));
-        $factory = $factory->validation($v->rule(fn (array $data) => Result::success($data[1])));
-        $factory = $factory->validation($v->rule(fn (array $data) => Result::success($data[2])));
+        $factory = Factory::from($callable);
 
         $test = $factory([1, 2, 3]);
 
-        $this->assertEquals($test, '1:2:3');
+        $this->assertEquals($test, 'result');
     }
 
-    public function testItAppiesValidationOnTheFactoryClassConstructor(): void
+    public function testItAppiesReducersOnTheFactoryCallable(): void
     {
-        $v = Validation::factory();
+        $input = [1, 2, 3];
 
-        $factory = Factory::class(TestClassFactoryTest::class);
+        $callable = fn () => 1;
 
-        $factory = $factory->validation($v->rule(fn (array $data) => Result::success($data[0])));
-        $factory = $factory->validation($v->rule(fn (array $data) => Result::success($data[1])));
-        $factory = $factory->validation($v->rule(fn (array $data) => Result::success($data[2])));
+        $pure1 = Result::pure(fn () => 'partial');
+        $pure2 = Result::pure(fn () => 'partial');
+        $pure3 = Result::pure(fn () => 'result');
 
-        $test = $factory([1, 2, 3]);
+        $reducer1 = $this->createMock(ReducerInterface::class);
+        $reducer2 = $this->createMock(ReducerInterface::class);
+        $reducer3 = $this->createMock(ReducerInterface::class);
 
-        $this->assertEquals($test, new TestClassFactoryTest(1, 2, 3));
+        $reducer1->expects($this->once())->method('__invoke')
+            ->with(Result::pure($callable), Result::unit($input))
+            ->willReturn($pure1);
+
+        $reducer2->expects($this->once())->method('__invoke')
+            ->with($pure1, Result::unit($input))
+            ->willReturn($pure2);
+
+        $reducer3->expects($this->once())->method('__invoke')
+            ->with($pure2, Result::unit($input))
+            ->willReturn($pure3);
+
+        $factory = Factory::from($callable)->validation($reducer1, $reducer2, $reducer3);
+
+        $test = $factory($input);
+
+        $this->assertEquals($test, 'result');
     }
 }

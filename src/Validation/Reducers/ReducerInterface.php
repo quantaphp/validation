@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Quanta;
+namespace Quanta\Validation\Reducers;
 
 use Quanta\Validation\Result;
 
-interface ValidationInterface
+interface ReducerInterface
 {
     public function __invoke(Result $factory, Result $input): Result;
 }

@@ -8,8 +8,11 @@ use Quanta\Validation\Rules;
 use Quanta\Validation\Types;
 use Quanta\Validation\Result;
 use Quanta\Validation\AbstractInput;
+use Quanta\Validation\Reducers\CombinedReducer;
+use Quanta\Validation\Reducers\VariadicReducer;
+use Quanta\Validation\Reducers\ReducerInterface;
 
-final class Validation implements ValidationInterface
+final class Validation
 {
     public static function factory(): self
     {
@@ -169,23 +172,21 @@ final class Validation implements ValidationInterface
         return (new self(...$this->rules, ...[Result::bind($rule)]))->rule(...$rules);
     }
 
-    public function __invoke(Result $factory, Result $input): Result
+    public function __invoke(Result $input): Result
     {
-        $input = array_reduce($this->rules, [$this, 'reducer'], $input);
-
-        return Result::apply($factory)($input);
+        return array_reduce($this->rules, [$this, 'reducer'], $input);
     }
 
     /**
-     * @param string|ValidationInterface ...$validation
+     * @param string|Validation|ReducerInterface ...$reducer
      */
-    public function variadic(string|ValidationInterface $validation): ValidationInterface
+    public function variadic(string|Validation|ReducerInterface $reducer): ReducerInterface
     {
-        return VariadicValidation::from(
-            $validation,
-            ...$this->rules,
-            ...[Result::bind(new Rules\IsArray)]
-        );
+        $reducer = VariadicReducer::from($reducer);
+
+        return count($this->rules) > 0
+            ? new CombinedReducer($this->array(), $reducer)
+            : $reducer;
     }
 
     private function reducer(Result $input, callable $rule): Result

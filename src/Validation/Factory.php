@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Quanta\Validation;
 
-use Quanta\VariadicValidation;
-use Quanta\ValidationInterface;
+use Quanta\Validation;
+use Quanta\Validation\Reducers\Reducer;
+use Quanta\Validation\Reducers\VariadicReducer;
+use Quanta\Validation\Reducers\ReducerInterface;
 
 final class Factory
 {
@@ -20,13 +22,13 @@ final class Factory
     }
 
     /**
-     * @var ValidationInterface[]
+     * @var ReducerInterface[]
      */
-    private array $validations;
+    private array $reducers;
 
-    private function __construct(private Result $f, ValidationInterface ...$validations)
+    private function __construct(private Result $f, ReducerInterface ...$reducers)
     {
-        $this->validations = $validations;
+        $this->reducers = $reducers;
     }
 
     /**
@@ -36,25 +38,33 @@ final class Factory
     {
         $input = Result::unit($data);
 
-        $reducer = fn (Result $factory, ValidationInterface $validation) => $validation($factory, $input);
+        $reducer = fn (Result $factory, ReducerInterface $reducer) => $reducer($factory, $input);
 
-        $result = array_reduce($this->validations, $reducer, $this->f);
+        $result = array_reduce($this->reducers, $reducer, $this->f);
 
         return $result->value();
     }
 
-    public function validation(ValidationInterface ...$validations): self
+    public function validation(Validation|ReducerInterface ...$reducers): self
     {
-        if (count($validations) == 0) return $this;
+        if (count($reducers) == 0) return $this;
 
-        return new self($this->f, ...$this->validations, ...$validations);
+        $reducer = array_shift($reducers);
+
+        if ($reducer instanceof Validation) {
+            $reducer = new Reducer($reducer);
+        }
+
+        $instance = new self($this->f, ...$this->reducers, ...[$reducer]);
+
+        return $instance->validation(...$reducers);
     }
 
     /**
-     * @param string|ValidationInterface ...$validation
+     * @param string|Validation|ReducerInterface ...$reducer
      */
-    public function variadic(string|ValidationInterface $validation): self
+    public function variadic(string|Validation|ReducerInterface $reducer): self
     {
-        return $this->validation(VariadicValidation::from($validation));
+        return new self($this->f, ...$this->reducers, ...[VariadicReducer::from($reducer)]);
     }
 }

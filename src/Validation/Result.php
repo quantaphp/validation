@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Quanta\Validation;
 
-use Quanta\ValidationInterface;
+use Quanta\Validation\Reducers\ReducerInterface;
 
 final class Result
 {
@@ -154,16 +154,16 @@ final class Result
      *
      * @return callable(self, self): self
      */
-    public static function variadic(ValidationInterface $validation): callable
+    public static function variadic(ReducerInterface $reducer): callable
     {
-        return function (self $factory, self $result) use ($validation): self {
+        return function (self $factory, self $result) use ($reducer): self {
             if ($result->status == self::ERROR) {
-                return $validation($factory, $result);
+                return $reducer($factory, $result);
             }
 
             if (is_iterable($result->value)) {
                 foreach ($result->value as $key => $value) {
-                    $factory = $validation($factory, self::success($value, $result->final, ...$result->keys, ...[(string) $key]));
+                    $factory = $reducer($factory, self::success($value, $result->final, ...$result->keys, ...[(string) $key]));
                 }
 
                 return $factory;
@@ -171,7 +171,7 @@ final class Result
 
             throw new \UnexpectedValueException(
                 sprintf(
-                    'Variadic validation can only be used with a Result containing an iterable, %s found',
+                    'Variadic reducer can only be used with a Result containing an iterable, %s found',
                     gettype($result->value)
                 )
             );

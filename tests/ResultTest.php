@@ -6,11 +6,11 @@ require_once __DIR__ . '/TestCallable.php';
 
 use PHPUnit\Framework\TestCase;
 
-use Quanta\ValidationInterface;
 use Quanta\Validation\Pure;
 use Quanta\Validation\Error;
 use Quanta\Validation\Result;
 use Quanta\Validation\InvalidDataException;
+use Quanta\Validation\Reducers\ReducerInterface;
 
 final class ResultTest extends TestCase
 {
@@ -342,9 +342,9 @@ final class ResultTest extends TestCase
             Result::pure(fn () => 4),
         ];
 
-        $validation = $this->createMock(ValidationInterface::class);
+        $reducer = $this->createMock(ReducerInterface::class);
 
-        $validation->expects($this->exactly(3))
+        $reducer->expects($this->exactly(3))
             ->method('__invoke')
             ->willReturnCallback(function ($factory, $result) use ($factories, $results) {
                 if ($factory === $factories[0] && $result == $results[0]) return $factories[1];
@@ -352,9 +352,9 @@ final class ResultTest extends TestCase
                 if ($factory === $factories[2] && $result == $results[2]) return $factories[3];
             });
 
-        $variadic = Result::variadic($validation);
+        $reducer = Result::variadic($reducer);
 
-        $test = $variadic($factories[0], $init);
+        $test = $reducer($factories[0], $init);
 
         $this->assertSame($test, $factories[3]);
     }
@@ -366,30 +366,30 @@ final class ResultTest extends TestCase
 
         $expected = Result::error('default2');
 
-        $validation = $this->createMock(ValidationInterface::class);
+        $reducer = $this->createMock(ReducerInterface::class);
 
-        $validation->expects($this->exactly(1))
+        $reducer->expects($this->exactly(1))
             ->method('__invoke')
             ->with($factory, $error)
             ->willReturn($expected);
 
-        $variadic = Result::variadic($validation);
+        $reducer = Result::variadic($reducer);
 
-        $test = $variadic($factory, $error);
+        $test = $reducer($factory, $error);
 
         $this->assertSame($test, $expected);
     }
 
     public function testFunctionReturnedByVariadicThrowsForSuccessContainingANonIterableValue(): void
     {
-        $validation = $this->createMock(ValidationInterface::class);
+        $reducer = $this->createMock(ReducerInterface::class);
 
-        $validation->expects($this->never())->method('__invoke');
+        $reducer->expects($this->never())->method('__invoke');
 
-        $variadic = Result::variadic($validation);
+        $reducer = Result::variadic($reducer);
 
         $this->expectException(UnexpectedValueException::class);
 
-        $variadic(Result::pure(fn () => 1), Result::success(1));
+        $reducer(Result::pure(fn () => 1), Result::success(1));
     }
 }
