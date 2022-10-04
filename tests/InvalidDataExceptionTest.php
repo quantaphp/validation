@@ -17,6 +17,30 @@ final class InvalidDataExceptionTest extends TestCase
         $this->assertInstanceOf(Throwable::class, new InvalidDataException(Error::from('default')));
     }
 
+    public function testExceptionMessageIsTheFirstErrorFormattedWithTheDefaultErrorFormatter(): void
+    {
+        $params = ['key1' => 'a', 'key2' => 'b', 'key3' => 1];
+
+        $error1 = (Error::from('> {key} %s:%s:%s <', $params));
+        $error2 = (Error::from('> {key} %s:%s:%s <', $params)->nested('key1'));
+        $error3 = (Error::from('> {key} %s:%s:%s <', $params)->nested('key1', 'key2', 'key3'));
+        $error4 = (Error::from('> %s:%s:%s <', $params)->nested('key1', 'key2', 'key3'));
+        $extraError1 = Error::from('extra1');
+        $extraError2 = Error::from('extra2');
+
+        $formatter = new ErrorFormatter;
+
+        $test1 = (new InvalidDataException($error1, $extraError1, $extraError2))->getMessage();
+        $test2 = (new InvalidDataException($error2, $extraError1, $extraError2))->getMessage();
+        $test3 = (new InvalidDataException($error3, $extraError1, $extraError2))->getMessage();
+        $test4 = (new InvalidDataException($error4, $extraError1, $extraError2))->getMessage();
+
+        $this->assertEquals($test1, $formatter($error1));
+        $this->assertEquals($test2, $formatter($error2));
+        $this->assertEquals($test3, $formatter($error3));
+        $this->assertEquals($test4, $formatter($error4));
+    }
+
     public function testResultReturnsAnErrorResultWithTheErrors(): void
     {
         $error1 = Error::from('default1');
@@ -30,7 +54,7 @@ final class InvalidDataExceptionTest extends TestCase
         $this->assertEquals($test, Result::errors($error1, $error2, $error3));
     }
 
-    public function testUsesDefaultErrorFormatterWhenNoErrorFormatterGiven(): void
+    public function testMessagesFormatsTheErrorsWithTheDefaultErrorFormatterWhenNoneGiven(): void
     {
         $params = ['key1' => 'a', 'key2' => 'b', 'key3' => 1];
 
@@ -51,7 +75,7 @@ final class InvalidDataExceptionTest extends TestCase
         $this->assertEquals($test4, $formatter($error4));
     }
 
-    public function testUsesTheGivenErrorFormatter(): void
+    public function testMessagesFormatsTheErrorsWithTheGivenErrorFormatter(): void
     {
         $error1 = Error::from('default1');
         $error2 = Error::from('default2');

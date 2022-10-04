@@ -6,6 +6,17 @@ namespace Quanta\Validation;
 
 final class InvalidDataException extends \DomainException
 {
+    private static ?ErrorFormatter $default = null;
+
+    private static function defaultFormatter(): ErrorFormatter
+    {
+        if (!self::$default) {
+            self::$default = new ErrorFormatter;
+        }
+
+        return self::$default;
+    }
+
     /**
      * @var Error[]
      */
@@ -13,9 +24,11 @@ final class InvalidDataException extends \DomainException
 
     public function __construct(Error $error, Error ...$errors)
     {
+        $formatter = self::defaultFormatter();
+
         $this->errors = [$error, ...$errors];
 
-        parent::__construct('invalid data');
+        parent::__construct($formatter($error));
     }
 
     public function result(): Result
@@ -28,6 +41,6 @@ final class InvalidDataException extends \DomainException
      */
     public function messages(ErrorFormatterInterface $formatter = null): array
     {
-        return array_map($formatter ?? new ErrorFormatter, $this->errors);
+        return array_map($formatter ?? self::defaultFormatter(), $this->errors);
     }
 }

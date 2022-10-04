@@ -43,8 +43,8 @@ final class ErrorFormatterTest extends TestCase
         $test4 = ($this->formatter)(Error::from('> %s:%s:%s <', $params,)->nested('key1', 'key2', 'key3'));
 
         $this->assertEquals($test1, '> value a:b:1 <');
-        $this->assertEquals($test2, '> key1 a:b:1 <');
-        $this->assertEquals($test3, '[key1][key2] > key3 a:b:1 <');
+        $this->assertEquals($test2, '> [key1] a:b:1 <');
+        $this->assertEquals($test3, '[key1][key2] > [key3] a:b:1 <');
         $this->assertEquals($test4, '[key1][key2][key3] > a:b:1 <');
     }
 }
