@@ -7,7 +7,7 @@ namespace Quanta\Validation\Rules;
 use Quanta\Validation\Result;
 use Quanta\Validation\InvalidDataException;
 
-final class Wrapped
+final class WrappedCallable
 {
     /**
      * @var callable

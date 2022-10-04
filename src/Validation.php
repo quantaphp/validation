@@ -165,8 +165,8 @@ final class Validation
             }
 
             $rule = is_subclass_of($rule, AbstractInput::class)
-                ? new Rules\Wrapped([$rule, 'from'])
-                : new Rules\Wrapped(fn (...$xs) => new $rule(...$xs));
+                ? new Rules\WrappedCallable([$rule, 'from'])
+                : new Rules\WrappedClass($rule);
         }
 
         return (new self(...$this->rules, ...[Result::bind($rule)]))->rule(...$rules);

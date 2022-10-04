@@ -142,7 +142,7 @@ final class ValidationTest extends TestCase
         $test = $validation->rule(TestAbstractInputValidationTest::class);
 
         $this->assertNotSame($test, $validation);
-        $this->assertEquals($test, $validation->rule(new Rules\Wrapped([TestAbstractInputValidationTest::class, 'from'])));
+        $this->assertEquals($test, $validation->rule(new Rules\WrappedCallable([TestAbstractInputValidationTest::class, 'from'])));
     }
 
     /**
@@ -153,7 +153,7 @@ final class ValidationTest extends TestCase
         $test = $validation->rule(TestClassValidationTest::class);
 
         $this->assertNotSame($test, $validation);
-        $this->assertEquals($test, $validation->rule(new Rules\Wrapped(fn ($x) => new TestClassValidationTest($x))));
+        $this->assertEquals($test, $validation->rule(new Rules\WrappedClass(TestClassValidationTest::class)));
     }
 
     /**
