@@ -5,13 +5,13 @@ namespace Quanta\Validation\Types;
 use Quanta\Validation\Error;
 use Quanta\Validation\InvalidDataException;
 
-class StrictlyPositiveInteger extends AbstractInteger
+class PositiveFloat extends AbstractFloat
 {
-    public function __construct(int $value)
+    public function __construct(float $value)
     {
-        if (!($value > 0)) {
+        if ($value < 0.0) {
             throw new InvalidDataException(
-                Error::from('{key} must be greater than 0, %s given', ['value' => $value], self::class),
+                Error::from('{key} must be positive, %s given', ['value' => $value], self::class),
             );
         }
 
