@@ -5,6 +5,7 @@ declare(strict_types=1);
 use PHPUnit\Framework\TestCase;
 
 use Quanta\Validation\Error;
+use Quanta\Validation\Result;
 use Quanta\Validation\ErrorFormatter;
 use Quanta\Validation\ErrorFormatterInterface;
 use Quanta\Validation\InvalidDataException;
@@ -13,9 +14,20 @@ final class InvalidDataExceptionTest extends TestCase
 {
     public function testestImplementsThrowable(): void
     {
-        $this->assertInstanceOf(Throwable::class, new InvalidDataException(
-            Error::from('default')
-        ));
+        $this->assertInstanceOf(Throwable::class, new InvalidDataException(Error::from('default')));
+    }
+
+    public function testResultReturnsAnErrorResultWithTheErrors(): void
+    {
+        $error1 = Error::from('default1');
+        $error2 = Error::from('default2');
+        $error3 = Error::from('default3');
+
+        $exception = new InvalidDataException($error1, $error2, $error3);
+
+        $test = $exception->result();
+
+        $this->assertEquals($test, Result::errors($error1, $error2, $error3));
     }
 
     public function testUsesDefaultErrorFormatterWhenNoErrorFormatterGiven(): void

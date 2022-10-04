@@ -9,13 +9,18 @@ final class InvalidDataException extends \DomainException
     /**
      * @var Error[]
      */
-    public array $errors;
+    private array $errors;
 
     public function __construct(Error $error, Error ...$errors)
     {
         $this->errors = [$error, ...$errors];
 
         parent::__construct('invalid data');
+    }
+
+    public function result(): Result
+    {
+        return Result::errors(...$this->errors);
     }
 
     /**

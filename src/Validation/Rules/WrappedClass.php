@@ -18,7 +18,7 @@ final class WrappedClass
         try {
             $value = new $this->class(...$xs);
         } catch (InvalidDataException $e) {
-            return Result::errors(...$e->errors);
+            return $e->result();
         }
 
         return Result::success($value);
